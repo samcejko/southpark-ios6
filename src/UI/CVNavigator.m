@@ -42,7 +42,7 @@
     CVPlayerViewController *player = [[CVPlayerViewController alloc] initWithItemURL:clip.urlPath
                                                                             itemUUID:clip.uuid
                                                                                title:clip.title
-                                                                            subtitle:clip.subtitle
+                                                                            subtitle:clip.durationString ?: L(@"Clip")
                                                                       resumePosition:0
                                                                              episode:nil];
     [self presentPlayer:player from:controller];
