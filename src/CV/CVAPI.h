@@ -18,7 +18,11 @@
 // Resolves playable stream and chapters for an episode or clip
 - (CVHTTPTask *)resolveStreamForItemURL:(NSString *)urlPath itemUUID:(NSString *)uuid completion:(void (^)(CVStream *stream, NSError *error))completion;
 
-// Search across all cached seasons & episodes
+// Search across all bundled and cached seasons & episodes
 - (void)searchEpisodesAndClips:(NSString *)query completion:(void (^)(NSArray *results, NSError *error))completion;
+
+// Complete bundled offline-ready episodes catalog
+- (NSArray<CVEpisode *> *)allCatalogEpisodes;
+- (NSArray<CVEpisode *> *)bundledEpisodesForSeasonNumber:(NSInteger)seasonNumber;
 
 @end

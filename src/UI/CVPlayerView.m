@@ -18,7 +18,6 @@
 @property (nonatomic, strong) UILabel *remainingLabel;
 @property (nonatomic, strong) UIButton *ccButton;
 @property (nonatomic, strong) UIButton *qualityButton;
-@property (nonatomic, strong) UISegmentedControl *actSegments;
 
 @property (nonatomic, strong) UIActivityIndicatorView *spinner;
 @property (nonatomic, strong) NSTimer *hideTimer;
@@ -104,6 +103,7 @@
         _elapsedLabel = [[UILabel alloc] init];
         _elapsedLabel.font = [UIFont systemFontOfSize:11];
         _elapsedLabel.textColor = [UIColor whiteColor];
+        _elapsedLabel.backgroundColor = [UIColor clearColor];
         _elapsedLabel.textAlignment = NSTextAlignmentRight;
         _elapsedLabel.text = @"00:00";
         [_bottomBar addSubview:_elapsedLabel];
@@ -120,12 +120,14 @@
         _remainingLabel = [[UILabel alloc] init];
         _remainingLabel.font = [UIFont systemFontOfSize:11];
         _remainingLabel.textColor = [UIColor whiteColor];
+        _remainingLabel.backgroundColor = [UIColor clearColor];
         _remainingLabel.text = @"00:00";
         [_bottomBar addSubview:_remainingLabel];
 
         _ccButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_ccButton setTitle:@"CC" forState:UIControlStateNormal];
         _ccButton.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+        _ccButton.titleLabel.backgroundColor = [UIColor clearColor];
         [_ccButton setTitleColor:[UIColor colorWithWhite:1 alpha:0.5] forState:UIControlStateNormal];
         [_ccButton addTarget:self action:@selector(ccTapped) forControlEvents:UIControlEventTouchUpInside];
         [_bottomBar addSubview:_ccButton];
@@ -133,16 +135,10 @@
         _qualityButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_qualityButton setTitle:@"Auto" forState:UIControlStateNormal];
         _qualityButton.titleLabel.font = [UIFont boldSystemFontOfSize:11];
+        _qualityButton.titleLabel.backgroundColor = [UIColor clearColor];
         [_qualityButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [_qualityButton addTarget:self action:@selector(qualityTapped) forControlEvents:UIControlEventTouchUpInside];
         [_bottomBar addSubview:_qualityButton];
-
-        _actSegments = [[UISegmentedControl alloc] initWithFrame:CGRectZero];
-        _actSegments.segmentedControlStyle = UISegmentedControlStyleBar;
-        _actSegments.tintColor = [UIColor colorWithWhite:0.3 alpha:0.8];
-        _actSegments.hidden = YES;
-        [_actSegments addTarget:self action:@selector(actSegmentChanged:) forControlEvents:UIControlEventValueChanged];
-        [_bottomBar addSubview:_actSegments];
 
         // Spinner
         _spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -200,16 +196,6 @@
 - (void)setChapters:(NSArray<CVChapter *> *)chapters
 {
     self.chaptersList = chapters;
-    if (chapters.count > 1) {
-        [self.actSegments removeAllSegments];
-        for (NSUInteger i = 0; i < chapters.count; i++) {
-            [self.actSegments insertSegmentWithTitle:chapters[i].title ?: [NSString stringWithFormat:@"Act %lu", (unsigned long)(i + 1)] atIndex:i animated:NO];
-        }
-        self.actSegments.hidden = NO;
-    } else {
-        self.actSegments.hidden = YES;
-    }
-    [self setNeedsLayout];
 }
 
 - (void)setTime:(NSTimeInterval)current duration:(NSTimeInterval)duration
@@ -231,18 +217,6 @@
         NSInteger remM = (NSInteger)(rem / 60);
         NSInteger remS = (NSInteger)(rem - remM * 60);
         self.remainingLabel.text = [NSString stringWithFormat:@"-%02ld:%02ld", (long)remM, (long)remS];
-
-        // Highlight active chapter
-        if (self.chaptersList.count > 1) {
-            for (NSInteger i = (NSInteger)self.chaptersList.count - 1; i >= 0; i--) {
-                if (current >= self.chaptersList[i].streamOffsetSeconds) {
-                    if (self.actSegments.selectedSegmentIndex != i) {
-                        self.actSegments.selectedSegmentIndex = i;
-                    }
-                    break;
-                }
-            }
-        }
     }
 }
 
@@ -290,15 +264,14 @@
     self.closeButton.frame = CGRectMake(10, 4, 36, 36);
     self.titleLabel.frame = CGRectMake(54, 10, w - 64, 24);
 
-    // Center bar: 200 x 60 centered
+    // Center bar: 220 x 60 centered
     self.centerBar.frame = CGRectMake((w - 220) / 2.0, (h - 60) / 2.0, 220, 60);
     self.skipBackButton.frame = CGRectMake(10, 8, 44, 44);
     self.playPauseButton.frame = CGRectMake(88, 8, 44, 44);
     self.skipForwardButton.frame = CGRectMake(166, 8, 44, 44);
 
-    // Bottom bar: height 64 or 96 (with act segments)
-    CGFloat botH = self.actSegments.hidden ? 54 : 90;
-    self.bottomBar.frame = CGRectMake(0, h - botH, w, botH);
+    // Bottom bar: fixed height 54
+    self.bottomBar.frame = CGRectMake(0, h - 54, w, 54);
 
     // Scrubber row
     self.elapsedLabel.frame = CGRectMake(10, 14, 46, 20);
@@ -306,10 +279,6 @@
     self.remainingLabel.frame = CGRectMake(w - 130, 14, 46, 20);
     self.ccButton.frame = CGRectMake(w - 80, 8, 32, 32);
     self.qualityButton.frame = CGRectMake(w - 44, 8, 38, 32);
-
-    if (!self.actSegments.hidden) {
-        self.actSegments.frame = CGRectMake(14, 48, w - 28, 30);
-    }
 }
 
 #pragma mark - Actions
@@ -349,14 +318,6 @@
     [self resetHideTimer];
 }
 
-- (void)actSegmentChanged:(UISegmentedControl *)sender
-{
-    NSInteger idx = sender.selectedSegmentIndex;
-    if (idx >= 0 && idx < self.chaptersList.count) {
-        [self.delegate playerView:self didSelectChapter:self.chaptersList[idx]];
-    }
-    [self resetHideTimer];
-}
 
 - (void)scrubberChanged:(UISlider *)sender
 {

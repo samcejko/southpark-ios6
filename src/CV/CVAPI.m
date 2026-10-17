@@ -67,6 +67,14 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
         return nil;
     }
 
+    NSArray *bundled = [self bundledEpisodesForSeasonNumber:season.seasonNumber];
+    if (bundled.count) {
+        season.episodeCount = bundled.count;
+        [[CVCache shared] setObject:bundled forKey:cacheKey ttl:21600];
+        if (completion) completion(bundled, nil);
+        return nil;
+    }
+
     NSString *url = nil;
     if (season.urlPath.length) {
         if ([season.urlPath hasPrefix:@"http"]) url = season.urlPath;
@@ -203,6 +211,62 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
     return outerTask;
 }
 
+- (NSArray<CVEpisode *> *)allCatalogEpisodes
+{
+    static NSArray<CVEpisode *> *sCatalog = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *path = [[NSBundle mainBundle] pathForResource:@"catalog" ofType:@"json"];
+        if (path) {
+            NSData *data = [NSData dataWithContentsOfFile:path];
+            if (data) {
+                NSArray *raw = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+                if ([raw isKindOfClass:[NSArray class]]) {
+                    NSMutableArray *list = [NSMutableArray arrayWithCapacity:raw.count];
+                    for (NSDictionary *d in raw) {
+                        if (![d isKindOfClass:[NSDictionary class]]) continue;
+                        CVEpisode *ep = [[CVEpisode alloc] init];
+                        ep.uuid = CVStr(d[@"uuid"]);
+                        ep.title = CVStr(d[@"title"]);
+                        ep.summary = CVStr(d[@"summary"]);
+                        ep.seasonNumber = [d[@"seasonNumber"] integerValue];
+                        ep.episodeNumber = [d[@"episodeNumber"] integerValue];
+                        ep.seasonEpisodeString = CVStr(d[@"seasonEpisodeString"]);
+                        ep.airDate = CVStr(d[@"airDate"]);
+                        ep.durationString = CVStr(d[@"durationString"]);
+                        ep.urlPath = CVStr(d[@"urlPath"]);
+                        NSString *rawImg = CVStr(d[@"thumbnailURL"]);
+                        if (rawImg.length) {
+                            if ([rawImg rangeOfString:@"format="].location == NSNotFound) {
+                                ep.thumbURL = [rawImg stringByAppendingString:@"&format=jpg"];
+                            } else {
+                                ep.thumbURL = rawImg;
+                            }
+                        }
+                        ep.available = YES;
+                        [list addObject:ep];
+                    }
+                    sCatalog = [list copy];
+                }
+            }
+        }
+        if (!sCatalog) sCatalog = @[];
+    });
+    return sCatalog;
+}
+
+- (NSArray<CVEpisode *> *)bundledEpisodesForSeasonNumber:(NSInteger)seasonNumber
+{
+    NSArray<CVEpisode *> *all = [self allCatalogEpisodes];
+    NSMutableArray *res = [NSMutableArray array];
+    for (CVEpisode *ep in all) {
+        if (ep.seasonNumber == seasonNumber) {
+            [res addObject:ep];
+        }
+    }
+    return res;
+}
+
 - (void)searchEpisodesAndClips:(NSString *)query completion:(void (^)(NSArray *results, NSError *error))completion
 {
     if (!query.length) {
@@ -210,23 +274,86 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
         return;
     }
 
-    NSString *q = [query lowercaseString];
+    NSString *trimmed = [query stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (!trimmed.length) {
+        if (completion) completion(@[], nil);
+        return;
+    }
 
-    // Search through cached season episodes
+    NSString *cleanQuery = [trimmed lowercaseString];
+    NSArray *queryWords = [cleanQuery componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSMutableArray *nonEmptyWords = [NSMutableArray array];
+    for (NSString *w in queryWords) {
+        if (w.length) [nonEmptyWords addObject:w];
+    }
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableArray *results = [NSMutableArray array];
+        NSMutableSet *seenUUIDs = [NSMutableSet set];
+
+        // Gather all candidates from catalog first
+        NSArray<CVEpisode *> *catalog = [self allCatalogEpisodes];
+        NSMutableArray<CVEpisode *> *allCandidates = [NSMutableArray arrayWithArray:catalog];
+
+        // Also check cached episodes (which might have dynamic or extra items)
         NSArray *seasons = [[CVCache shared] objectForKey:@"seasons_list"];
         for (CVSeason *s in seasons) {
             NSString *key = [NSString stringWithFormat:@"episodes_season_%ld", (long)s.seasonNumber];
             NSArray *eps = [[CVCache shared] objectForKey:key];
-            for (CVEpisode *ep in eps) {
-                if ([ep.title.lowercaseString rangeOfString:q].location != NSNotFound ||
-                    [ep.summary.lowercaseString rangeOfString:q].location != NSNotFound ||
-                    [ep.seasonEpisodeString.lowercaseString rangeOfString:q].location != NSNotFound) {
-                    [results addObject:ep];
+            if (eps.count) {
+                for (CVEpisode *ep in eps) {
+                    if (ep.uuid.length && ![seenUUIDs containsObject:ep.uuid]) {
+                        [seenUUIDs addObject:ep.uuid];
+                        if (![allCandidates containsObject:ep]) {
+                            [allCandidates addObject:ep];
+                        }
+                    }
                 }
             }
         }
+
+        // Search episodes
+        for (CVEpisode *ep in allCandidates) {
+            NSString *t = ep.title.lowercaseString ?: @"";
+            NSString *desc = ep.summary.lowercaseString ?: @"";
+            NSString *se = ep.seasonEpisodeString.lowercaseString ?: @"";
+            NSString *sCode1 = [NSString stringWithFormat:@"s%ld", (long)ep.seasonNumber];
+            NSString *sCode2 = [NSString stringWithFormat:@"s%02ld", (long)ep.seasonNumber];
+            NSString *seCode1 = [NSString stringWithFormat:@"s%lde%ld", (long)ep.seasonNumber, (long)ep.episodeNumber];
+            NSString *seCode2 = [NSString stringWithFormat:@"s%02lde%02ld", (long)ep.seasonNumber, (long)ep.episodeNumber];
+            NSString *combined = [NSString stringWithFormat:@"%@ %@ %@ %@ %@ %@ %@", t, desc, se, sCode1, sCode2, seCode1, seCode2];
+
+            BOOL allMatch = YES;
+            for (NSString *w in nonEmptyWords) {
+                if ([combined rangeOfString:w].location == NSNotFound) {
+                    allMatch = NO;
+                    break;
+                }
+            }
+            if (allMatch) {
+                if (ep.uuid.length) [seenUUIDs addObject:ep.uuid];
+                [results addObject:ep];
+            }
+        }
+
+        // Rank results: exact title match or title prefix first
+        [results sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            if ([obj1 isKindOfClass:[CVEpisode class]] && [obj2 isKindOfClass:[CVEpisode class]]) {
+                CVEpisode *ep1 = (CVEpisode *)obj1;
+                CVEpisode *ep2 = (CVEpisode *)obj2;
+                BOOL ep1TitleMatch = [ep1.title.lowercaseString rangeOfString:cleanQuery].location != NSNotFound;
+                BOOL ep2TitleMatch = [ep2.title.lowercaseString rangeOfString:cleanQuery].location != NSNotFound;
+                if (ep1TitleMatch && !ep2TitleMatch) return NSOrderedAscending;
+                if (!ep1TitleMatch && ep2TitleMatch) return NSOrderedDescending;
+
+                // Sort by season and episode number
+                if (ep1.seasonNumber != ep2.seasonNumber) {
+                    return ep1.seasonNumber < ep2.seasonNumber ? NSOrderedAscending : NSOrderedDescending;
+                }
+                return ep1.episodeNumber < ep2.episodeNumber ? NSOrderedAscending : NSOrderedDescending;
+            }
+            return NSOrderedSame;
+        }];
 
         dispatch_async(dispatch_get_main_queue(), ^{
             if (completion) completion(results, nil);

@@ -5,6 +5,13 @@ All notable changes to **City VOD** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-10-17
+
+### Fixed
+- **Instant offline-ready search**: bundled offline catalog of all South Park episodes across Seasons 1–28 for instant live search as you type.
+- **Player scrubber label backgrounds**: fixed white rectangular artifacts around elapsed and remaining time labels on iOS 6 by making label backgrounds clear.
+- **Streamlined player controls**: removed act/chapter buttons at the bottom of the video player for a clean, unobstructed view.
+
 ## [0.1.0] - 2026-10-17
 
 ### Added

@@ -146,9 +146,7 @@
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
-    if (!searchText.length) {
-        [self performSearch:@""];
-    }
+    [self performSearch:searchText];
 }
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
