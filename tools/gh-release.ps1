@@ -30,7 +30,7 @@ if (-not $assets) { throw "No .ipa/.deb in $RunDir" }
 
 $changelog = Get-Content (Join-Path $root 'CHANGELOG.md') -Raw -Encoding UTF8
 $section = ''
-if ($changelog -match "(?s)## $([regex]::Escape($Version))[^\n]*\n(.*?)(\n## |\z)") { $section = $Matches[1].Trim() }
+if ($changelog -match "(?s)## (?:\[)?$([regex]::Escape($Version))(?:\])?[^\n]*\n(.*?)(\n## |\z)") { $section = $Matches[1].Trim() }
 $sums = $assets | ForEach-Object { "- ``$($_.Name)`` - SHA-256 ``$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())``" }
 $install = '**Installation (jailbroken iOS 6):** the IPA through `ipainstaller -f CityVOD-{0}.ipa` (AppSync Unified), the DEB through `dpkg -i` followed by `su mobile -c uicache`. Both carry the same build; favourites and settings survive switching from one to the other. **iOS 14-17 (arm64, iPhone X and newer):** the `iphoneos-arm64` DEB for rootless jailbreaks (open it in Sileo or Zebra, or `dpkg -i`), the `-arm64.ipa` for TrollStore.' -f $Version
 $notes = ($section, '', $install, '', '**Checksums**', ($sums -join "`n")) -join "`n"
