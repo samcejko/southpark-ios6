@@ -274,7 +274,7 @@
 {
     self.subtitlesEnabled = !self.subtitlesEnabled;
     self.playerView.subtitlesEnabled = self.subtitlesEnabled;
-    [CVSettings setBool:self.subtitlesEnabled forKey:@"subtitlesEnabled"];
+    [CVSettings setSubtitlesEnabled:self.subtitlesEnabled];
 }
 
 - (void)playerView:(id)playerView didSelectChapter:(CVChapter *)chapter
