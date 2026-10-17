@@ -2,6 +2,7 @@
 #import "CVPlayerViewController.h"
 #import "CVEpisodeDetailViewController.h"
 #import "CVHistory.h"
+#import "CVAPI.h"
 #import "CVCommon.h"
 
 @implementation CVNavigator
@@ -77,16 +78,40 @@
 + (BOOL)openSouthParkURL:(NSURL *)url from:(UIViewController *)controller
 {
     NSString *host = url.host.lowercaseString;
-    if (![host isEqualToString:@"southparkstudios.com"] && ![host isEqualToString:@"www.southparkstudios.com"]) {
+    if (host.length && ![host isEqualToString:@"southparkstudios.com"] && ![host isEqualToString:@"www.southparkstudios.com"]) {
         return NO;
     }
 
     NSString *path = url.path;
     if ([path hasPrefix:@"/episodes/"]) {
-        CVEpisode *ep = [[CVEpisode alloc] init];
-        ep.urlPath = path;
-        ep.title = [path lastPathComponent];
-        [self openEpisode:ep from:controller];
+        CVEpisode *matched = nil;
+        NSArray<CVEpisode *> *catalog = [[CVAPI shared] allCatalogEpisodes];
+        for (CVEpisode *cand in catalog) {
+            if ([cand.urlPath isEqualToString:path]) {
+                matched = cand;
+                break;
+            }
+        }
+        if (!matched) {
+            NSArray *components = [path componentsSeparatedByString:@"/"];
+            if (components.count > 2) {
+                NSString *epId = components[2];
+                if (epId.length > 2) {
+                    for (CVEpisode *cand in catalog) {
+                        if ([cand.urlPath rangeOfString:epId].location != NSNotFound) {
+                            matched = cand;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (!matched) {
+            matched = [[CVEpisode alloc] init];
+            matched.urlPath = path;
+            matched.title = [path lastPathComponent];
+        }
+        [self openEpisode:matched from:controller];
         return YES;
     } else if ([path hasPrefix:@"/clips/"]) {
         CVClip *clip = [[CVClip alloc] init];

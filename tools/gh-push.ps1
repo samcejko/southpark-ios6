@@ -52,7 +52,7 @@ function Invoke-GH {
 function Test-Ignored([string]$rel) {
     $r = $rel -replace '\\', '/'
     if ($r -like '.theos/*' -or $r -like 'obj/*' -or $r -like 'packages/*' -or $r -like 'vendor/mbedtls/*' -or $r -like 'vendor/libwebp/*' -or $r -like '.git/*') { return $true }
-    if ($r -like '*.ipa' -or $r -like '*.deb' -or $r -like '*.DS_Store' -or $r -like '*.log') { return $true }
+    if ($r -like '*.ipa' -or $r -like '*.deb' -or $r -like '*.DS_Store' -or $r -like '*.log' -or $r -like 'ipad-*.png') { return $true }
     if (($r -split '/')[-1] -eq 'local.json') { return $true }
     return $false
 }
