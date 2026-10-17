@@ -203,10 +203,10 @@ static UIImage *CVDrawImage(CGSize size, void (^draw)(CGContextRef ctx))
 {
     NSString *key = [NSString stringWithFormat:@"accent-%d-%d", (int)highlighted, (int)disabled];
     return [self cachedImage:key builder:^UIImage *{
-        // (green glass; the lettering on it is black)
-        if (disabled) return CVRoundedGradientImage(RGB(170, 180, 170), RGB(140, 150, 140), RGB(110, 120, 110), 7, YES);
-        if (highlighted) return CVRoundedGradientImage(RGB(64, 190, 18), RGB(38, 132, 8), RGB(26, 96, 4), 7, YES);
-        return CVRoundedGradientImage(RGB(140, 255, 96), RGB(72, 214, 20), RGB(42, 150, 8), 7, YES);
+        // City VOD crimson-red glass; lettering on it is white with a drop shadow
+        if (disabled) return CVRoundedGradientImage(RGB(110, 75, 80), RGB(80, 55, 60), RGB(55, 38, 42), 7, YES);
+        if (highlighted) return CVRoundedGradientImage(RGB(165, 18, 26), RGB(105, 10, 16), RGB(60, 5, 10), 7, YES);
+        return CVRoundedGradientImage(RGB(240, 52, 62), RGB(168, 18, 28), RGB(95, 10, 15), 7, YES);
     }];
 }
 

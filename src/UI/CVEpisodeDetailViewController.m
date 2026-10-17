@@ -85,6 +85,9 @@
     self.playButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [self.playButton addTarget:self action:@selector(playTapped) forControlEvents:UIControlEventTouchUpInside];
     self.playButton.titleLabel.font = [UIFont boldSystemFontOfSize:15];
+    self.playButton.titleLabel.shadowOffset = CGSizeMake(0, -1);
+    [self.playButton setTitleShadowColor:[UIColor colorWithWhite:0 alpha:0.6] forState:UIControlStateNormal];
+    [self.playButton setTitleShadowColor:[UIColor colorWithWhite:0 alpha:0.8] forState:UIControlStateHighlighted];
     [self.scrollView addSubview:self.playButton];
 
     self.restartButton = [UIButton buttonWithType:UIButtonTypeCustom];

@@ -5,6 +5,12 @@ All notable changes to **City VOD** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-10-17
+
+### Changed
+- **City VOD Red Glossy Action Buttons**: replaced lime-green accent buttons with rich crimson-red skeuomorphic buttons (`#EB2D37` gradient) matching the City Wok branding, complete with classic iOS 6 embossed white text shadow.
+- **Thumbnail Duration Pill & Progress Bar Spacing**: separated the thumbnail duration pill and playback progress bar by 4pt to prevent visual collisions, refined margins and padding, and hidden duration pills on missing/zero duration (`00:00`).
+
 ## [0.1.2] - 2026-10-17
 
 ### Fixed

@@ -105,10 +105,14 @@
     CGFloat thumbW = floor(thumbH * (16.0 / 9.0));
     self.thumbView.frame = CGRectMake(10, 8, thumbW, thumbH);
 
-    // Duration pill at bottom right of thumbnail
+    // Duration pill at bottom right of thumbnail (with clear spacing above progress bar)
     CGSize durSize = [self.durationLabel.text sizeWithFont:self.durationLabel.font];
-    self.durationPill.frame = CGRectMake(thumbW - durSize.width - 8, thumbH - durSize.height - 6, durSize.width + 6, durSize.height + 4);
-    self.durationLabel.frame = CGRectMake(3, 2, durSize.width, durSize.height);
+    CGFloat pillW = durSize.width + 8;
+    CGFloat pillH = durSize.height + 4;
+    CGFloat pillY = (self.progressBar.hidden) ? (thumbH - pillH - 4) : (thumbH - pillH - 7);
+    CGFloat pillX = thumbW - pillW - 4;
+    self.durationPill.frame = CGRectMake(pillX, pillY, pillW, pillH);
+    self.durationLabel.frame = CGRectMake(4, 2, durSize.width, durSize.height);
 
     // Progress bar along the very bottom of the thumbnail
     self.progressBar.frame = CGRectMake(0, thumbH - 3, thumbW, 3);
@@ -139,7 +143,7 @@
     self.subtitleLabel.text = sub;
 
     self.durationLabel.text = episode.durationString ?: @"";
-    self.durationPill.hidden = (episode.durationString.length == 0);
+    self.durationPill.hidden = (episode.durationString.length == 0 || [episode.durationString isEqualToString:@"00:00"]);
 
     // Resume / Watched status
     NSTimeInterval pos = [[CVHistory shared] positionForUUID:episode.uuid];
@@ -153,6 +157,7 @@
     } else {
         self.progressBar.hidden = YES;
     }
+    [self setNeedsLayout];
 
     if (!episode.available) {
         self.alpha = 0.5;
@@ -185,9 +190,10 @@
     self.summaryLabel.text = clip.summary ?: @"";
     self.subtitleLabel.text = clip.airDate ?: @"";
     self.durationLabel.text = clip.durationString ?: @"";
-    self.durationPill.hidden = (clip.durationString.length == 0);
+    self.durationPill.hidden = (clip.durationString.length == 0 || [clip.durationString isEqualToString:@"00:00"]);
     self.progressBar.hidden = YES;
     self.alpha = 1.0;
+    [self setNeedsLayout];
 
     self.thumbView.image = [theme thumbnailPlaceholder];
     if (clip.thumbURL.length) {

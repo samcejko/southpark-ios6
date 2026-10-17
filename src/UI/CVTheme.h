@@ -34,7 +34,7 @@
 - (UIImage *)pillImageWithColor:(UIColor *)color;    // small glossy capsule (LIVE, viewer counts)
 - (UIImage *)darkPillImage;                 // translucent black capsule for text over thumbnails
 - (UIImage *)buttonImageHighlighted:(BOOL)highlighted;              // grey glossy button
-- (UIImage *)accentButtonImageHighlighted:(BOOL)highlighted disabled:(BOOL)disabled;   // green glossy button
+- (UIImage *)accentButtonImageHighlighted:(BOOL)highlighted disabled:(BOOL)disabled;   // red glossy button (City VOD accent)
 - (UIImage *)thumbnailPlaceholder;          // dark 16:9 box with a faint play sign
 - (UIImage *)categoryPlaceholder;
 - (UIImage *)avatarPlaceholderWithSize:(CGFloat)size;
