@@ -133,14 +133,14 @@
             ep.uuid = CVStr(item[@"id"]);
             ep.urlPath = CVStr(item[@"url"]);
 
-            NSDictionary *meta = KCDict(item[@"meta"]);
+            NSDictionary *meta = CVDict(item[@"meta"]);
             ep.mgid = CVStr(meta[@"itemMgid"]);
             ep.title = CVStr(meta[@"subHeader"]);
             ep.summary = CVStr(meta[@"description"]);
             ep.airDate = CVStr(meta[@"date"]);
 
-            NSDictionary *header = KCDict(meta[@"header"]);
-            NSDictionary *headerTitle = KCDict(header[@"title"]);
+            NSDictionary *header = CVDict(meta[@"header"]);
+            NSDictionary *headerTitle = CVDict(header[@"title"]);
             ep.seasonEpisodeString = CVStr(headerTitle[@"text"]); // e.g. "S1 • E1"
 
             // Parse season/episode number from "S1 • E1"
@@ -157,11 +157,11 @@
             ep.seasonNumber = parsedSeason > 0 ? parsedSeason : seasonNumber;
             ep.episodeNumber = parsedEp;
 
-            NSDictionary *media = KCDict(item[@"media"]);
+            NSDictionary *media = CVDict(item[@"media"]);
             ep.durationString = CVStr(media[@"duration"]);
             ep.durationSeconds = [self secondsFromDurationString:ep.durationString];
 
-            NSDictionary *image = KCDict(media[@"image"]);
+            NSDictionary *image = CVDict(media[@"image"]);
             NSString *rawImg = CVStr(image[@"url"]);
             if (rawImg.length) {
                 // Ensure jpg format is requested
@@ -202,17 +202,17 @@
             c.uuid = CVStr(item[@"id"]);
             c.urlPath = CVStr(item[@"url"]);
 
-            NSDictionary *meta = KCDict(item[@"meta"]);
-            NSDictionary *header = KCDict(meta[@"header"]);
+            NSDictionary *meta = CVDict(item[@"meta"]);
+            NSDictionary *header = CVDict(meta[@"header"]);
             c.title = CVStr(header[@"title"]);
             c.summary = CVStr(meta[@"description"]);
             c.airDate = CVStr(meta[@"date"]);
 
-            NSDictionary *media = KCDict(item[@"media"]);
+            NSDictionary *media = CVDict(item[@"media"]);
             c.durationString = CVStr(media[@"duration"]);
             c.durationSeconds = [self secondsFromDurationString:c.durationString];
 
-            NSDictionary *image = KCDict(media[@"image"]);
+            NSDictionary *image = CVDict(media[@"image"]);
             NSString *rawImg = CVStr(image[@"url"]);
             if (rawImg.length) {
                 if ([rawImg rangeOfString:@"format="].location == NSNotFound) {

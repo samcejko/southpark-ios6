@@ -88,13 +88,13 @@
 + (void)loadFromURL:(NSURL *)playlistURL completion:(void (^)(CVSubtitles *subtitles, NSError *error))completion
 {
     if (!playlistURL) {
-        if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"No subtitle URL"));
+        if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"No subtitle URL"));
         return;
     }
 
     [CVHTTP get:playlistURL.absoluteString headers:@{ @"Referer": @"https://www.southparkstudios.com/" } completion:^(NSInteger status, NSData *body, NSDictionary *headers, NSError *error) {
         if (error || status >= 400 || !body.length) {
-            if (completion) completion(nil, error ?: KCMakeError(status, @"Failed to fetch subtitles"));
+            if (completion) completion(nil, error ?: CVMakeError(status, @"Failed to fetch subtitles"));
             return;
         }
 
@@ -119,7 +119,7 @@
         }
 
         if (!segUrls.count) {
-            if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"No subtitle segments found"));
+            if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"No subtitle segments found"));
             return;
         }
 

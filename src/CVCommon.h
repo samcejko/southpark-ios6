@@ -38,6 +38,8 @@ enum {
 };
 
 NSError *CVMakeError(NSInteger code, NSString *message);
+#define KCMakeError CVMakeError
+#define KCDict CVDict
 
 // JSON values as the type the caller expects, nil/0 for anything else (NSNull, wrong type)
 NSString *CVStr(id value);         // numbers become their decimal string

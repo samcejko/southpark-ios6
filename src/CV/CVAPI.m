@@ -36,7 +36,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
     NSString *url = [CVSiteBase stringByAppendingString:@"/seasons/south-park/"];
     return [CVHTTP get:url headers:[self browserHeaders] completion:^(NSInteger status, NSData *body, NSDictionary *headers, NSError *error) {
         if (error || status >= 400 || !body.length) {
-            if (completion) completion(nil, error ?: KCMakeError(status, @"Failed to fetch seasons"));
+            if (completion) completion(nil, error ?: CVMakeError(status, @"Failed to fetch seasons"));
             return;
         }
 
@@ -48,7 +48,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
             [[CVCache shared] setObject:seasons forKey:@"seasons_list" ttl:86400]; // 24h
             if (completion) completion(seasons, nil);
         } else {
-            if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"Could not parse seasons"));
+            if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"Could not parse seasons"));
         }
     }];
 }
@@ -77,7 +77,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
 
     return [CVHTTP get:url headers:[self browserHeaders] completion:^(NSInteger status, NSData *body, NSDictionary *headers, NSError *error) {
         if (error || status >= 400 || !body.length) {
-            if (completion) completion(nil, error ?: KCMakeError(status, @"Failed to fetch episodes"));
+            if (completion) completion(nil, error ?: CVMakeError(status, @"Failed to fetch episodes"));
             return;
         }
 
@@ -90,7 +90,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
             [[CVCache shared] setObject:episodes forKey:cacheKey ttl:21600]; // 6h
             if (completion) completion(episodes, nil);
         } else {
-            if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"No episodes found for season"));
+            if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"No episodes found for season"));
         }
     }];
 }
@@ -100,7 +100,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
     NSString *url = [CVSiteBase stringByAppendingString:@"/"];
     return [CVHTTP get:url headers:[self browserHeaders] completion:^(NSInteger status, NSData *body, NSDictionary *headers, NSError *error) {
         if (error || status >= 400 || !body.length) {
-            if (completion) completion(nil, nil, error ?: KCMakeError(status, @"Failed to fetch home"));
+            if (completion) completion(nil, nil, error ?: CVMakeError(status, @"Failed to fetch home"));
             return;
         }
 
@@ -116,7 +116,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
 - (CVHTTPTask *)resolveStreamForItemURL:(NSString *)urlPath itemUUID:(NSString *)uuid completion:(void (^)(CVStream *stream, NSError *error))completion
 {
     if (!urlPath.length) {
-        if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"Invalid URL path"));
+        if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"Invalid URL path"));
         return nil;
     }
 
@@ -127,7 +127,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
     CVHTTPTask *pageTask = [CVHTTP get:itemFullUrl headers:[self browserHeaders] completion:^(NSInteger status, NSData *body, NSDictionary *headers, NSError *error) {
         if (outerTask.isCancelled) return;
         if (error || status >= 400 || !body.length) {
-            if (completion) completion(nil, error ?: KCMakeError(status, @"Failed to fetch video page"));
+            if (completion) completion(nil, error ?: CVMakeError(status, @"Failed to fetch video page"));
             return;
         }
 
@@ -136,7 +136,7 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
         NSString *rawServiceUrl = [CVPageData videoServiceURLFromPageData:data];
 
         if (!rawServiceUrl.length) {
-            if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"Video service URL not found"));
+            if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"Video service URL not found"));
             return;
         }
 
@@ -150,15 +150,15 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
         CVHTTPTask *micaTask = [CVHTTP getJSON:cleanUrl headers:@{ @"Referer": CVSiteBase } completion:^(id json, NSInteger mStatus, NSError *mError) {
             if (outerTask.isCancelled) return;
             if (mError || mStatus >= 400 || ![json isKindOfClass:[NSDictionary class]]) {
-                if (completion) completion(nil, mError ?: KCMakeError(mStatus, @"Failed to fetch stream descriptor"));
+                if (completion) completion(nil, mError ?: CVMakeError(mStatus, @"Failed to fetch stream descriptor"));
                 return;
             }
 
             NSDictionary *dict = (NSDictionary *)json;
-            NSDictionary *stitched = KCDict(dict[@"stitchedstream"]);
+            NSDictionary *stitched = CVDict(dict[@"stitchedstream"]);
             NSString *source = CVStr(stitched[@"source"]);
             if (!source.length) {
-                if (completion) completion(nil, KCMakeError(CVErrorBadResponse, @"No stream source in mica"));
+                if (completion) completion(nil, CVMakeError(CVErrorBadResponse, @"No stream source in mica"));
                 return;
             }
 
