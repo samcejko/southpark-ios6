@@ -3,6 +3,7 @@
 #import "CVAPI.h"
 #import "CVTheme.h"
 #import "CVCommon.h"
+#import "CVModern.h"
 
 @interface CVSeasonViewController ()
 @property (nonatomic, strong) NSArray<CVSeason *> *seasons;
@@ -27,6 +28,7 @@
 - (void)dealloc
 {
     [_currentTask cancel];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)viewDidLoad
@@ -51,6 +53,8 @@
     self.statusLabel.hidden = YES;
     [self.view addSubview:self.statusLabel];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applyTheme) name:CVThemeDidChangeNotification object:nil];
+
     [self applyTheme];
     [self loadSeasons];
 }
@@ -64,11 +68,13 @@
 - (void)applyTheme
 {
     CVTheme *theme = [CVTheme shared];
+    [theme applyToTableView:self.tableView];
     self.view.backgroundColor = [theme backgroundColor];
     self.tableView.backgroundColor = [theme backgroundColor];
     self.tableView.separatorColor = [theme separatorColor];
     self.statusLabel.textColor = [theme secondaryTextColor];
     self.spinner.activityIndicatorViewStyle = theme.isDark ? UIActivityIndicatorViewStyleWhite : UIActivityIndicatorViewStyleGray;
+    [self.tableView reloadData];
 }
 
 - (void)loadSeasons
@@ -114,8 +120,6 @@
 
     CVSeason *season = self.seasons[indexPath.row];
     cell.textLabel.text = season.label;
-    cell.textLabel.textColor = [[CVTheme shared] primaryTextColor];
-    cell.detailTextLabel.textColor = [[CVTheme shared] secondaryTextColor];
 
     if (season.episodeCount > 0) {
         cell.detailTextLabel.text = [NSString stringWithFormat:@"%ld %@", (long)season.episodeCount, L(@"episodes")];
@@ -123,7 +127,13 @@
         cell.detailTextLabel.text = @"";
     }
 
+    [[CVTheme shared] stylePlainCell:cell];
     return cell;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [[CVTheme shared] stylePlainCell:cell];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath

@@ -36,6 +36,7 @@
     if (self) {
         self.selectionStyle = UITableViewCellSelectionStyleGray;
         self.backgroundColor = [UIColor clearColor];
+        self.contentView.backgroundColor = [UIColor clearColor];
 
         _thumbView = [[UIImageView alloc] init];
         _thumbView.contentMode = UIViewContentModeScaleAspectFill;

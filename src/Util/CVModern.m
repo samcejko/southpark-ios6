@@ -748,6 +748,13 @@ void CVModernSetTableViewDark(UITableView *tableView, BOOL dark)
     if (CVAtLeast(13)) tableView.overrideUserInterfaceStyle = dark ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
 #endif
 }
+
+void CVModernSetCellDark(UITableViewCell *cell, BOOL dark)
+{
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+    if (CVAtLeast(13)) cell.overrideUserInterfaceStyle = dark ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+#endif
+}
 #pragma mark - Set-up
 
 static BOOL CVsetUpDone = NO;

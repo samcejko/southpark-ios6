@@ -687,6 +687,7 @@ static UIImage *CVDrawImage(CGSize size, void (^draw)(CGContextRef ctx))
 - (void)styleCell:(UITableViewCell *)cell
 {
     cell.backgroundColor = [self cardColor];
+    cell.contentView.backgroundColor = [UIColor clearColor];
     cell.textLabel.textColor = [self primaryTextColor];
     cell.textLabel.backgroundColor = [UIColor clearColor];
     cell.detailTextLabel.textColor = self.dark ? [self secondaryTextColor] : RGB(56, 84, 135);
@@ -698,6 +699,25 @@ static UIImage *CVDrawImage(CGSize size, void (^draw)(CGContextRef ctx))
     } else {
         cell.selectedBackgroundView = nil;
     }
+    CVModernSetCellDark(cell, [self isDark]);
+}
+
+- (void)stylePlainCell:(UITableViewCell *)cell
+{
+    cell.backgroundColor = [self backgroundColor];
+    cell.contentView.backgroundColor = [UIColor clearColor];
+    cell.textLabel.textColor = [self primaryTextColor];
+    cell.textLabel.backgroundColor = [UIColor clearColor];
+    cell.detailTextLabel.textColor = [self secondaryTextColor];
+    cell.detailTextLabel.backgroundColor = [UIColor clearColor];
+    if (self.dark) {
+        UIView *selected = [[UIView alloc] init];
+        selected.backgroundColor = RGB(50, 50, 55);
+        cell.selectedBackgroundView = selected;
+    } else {
+        cell.selectedBackgroundView = nil;
+    }
+    CVModernSetCellDark(cell, [self isDark]);
 }
 
 - (void)applyToSearchBar:(UISearchBar *)bar

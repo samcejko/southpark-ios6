@@ -82,6 +82,7 @@
 - (void)applyTheme
 {
     CVTheme *theme = [CVTheme shared];
+    [theme applyToTableView:self.tableView];
     self.view.backgroundColor = [theme backgroundColor];
     self.tableView.backgroundColor = [theme backgroundColor];
     self.tableView.separatorColor = [theme separatorColor];

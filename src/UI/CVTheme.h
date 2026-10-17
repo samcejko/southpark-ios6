@@ -82,6 +82,7 @@
 - (void)applyToTabBar:(UITabBar *)bar;
 - (void)applyToTableView:(UITableView *)tableView;
 - (void)styleCell:(UITableViewCell *)cell;
+- (void)stylePlainCell:(UITableViewCell *)cell;
 - (void)applyToSearchBar:(UISearchBar *)bar;
 - (UIActivityIndicatorViewStyle)spinnerStyle;
 
