@@ -10,9 +10,9 @@
 # user on the phone: /var/jb/var/mobile/.ssh for mobile, /var/root/.ssh for root; the stock password is alpine).
 # dpkg needs root; everything else (launching, snapshots, crash logs) works as mobile too.
 
-$AppName = 'Kicker'
-$AppBundleId = 'com.samcejko.kicker'
-$AppUrlScheme = 'kicker'   # '' when the app has no URL scheme (no debug commands, no snapshots)
+$AppName = 'CityVOD'
+$AppBundleId = 'com.samcejko.cityvod'
+$AppUrlScheme = 'cityvod'   # '' when the app has no URL scheme (no debug commands, no snapshots)
 
 $script:IPhoneKey = Join-Path $env:USERPROFILE '.ssh\iphone'
 $script:IPhoneDefaultHost = ''
