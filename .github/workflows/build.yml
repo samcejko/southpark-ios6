@@ -56,20 +56,33 @@ jobs:
         run: |
           set -e
           git clone --recursive https://github.com/theos/theos.git "$THEOS"
-          curl -sSL https://github.com/theos/toolchain/releases/download/v1.0-linux/linux-clang11-x86_64.tar.xz -o /tmp/toolchain.tar.xz
-          mkdir -p "$THEOS/toolchain/linux/iphone"
-          tar -xJf /tmp/toolchain.tar.xz -C "$THEOS/toolchain/linux/iphone"
-          rm -f /tmp/toolchain.tar.xz
+          mkdir -p "$THEOS/toolchain" "$THEOS/sdks"
 
-          mkdir -p "$THEOS/sdks"
+          echo "== toolchain =="
+          curl -sSL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-x86_64.tar.xz | tar -xJ -C "$THEOS/toolchain/"
+          if [ ! -x "$THEOS/toolchain/linux/iphone/bin/clang" ]; then
+            CLANG=$(find "$THEOS/toolchain" -type f -name clang -path '*/bin/*' | head -n1)
+            echo "clang found at: $CLANG"
+            ROOT=$(dirname "$(dirname "$CLANG")")
+            mkdir -p "$THEOS/toolchain/linux"
+            ln -sfn "$ROOT" "$THEOS/toolchain/linux/iphone"
+          fi
+          ls -la "$THEOS/toolchain/linux/iphone/bin" | head -n 40
+
+          echo "== SDKs =="
+          RELEASE=$(curl -sS https://api.github.com/repos/theos/sdks/releases/latest)
           for SDK in 9.3 16.5; do
-            URL="https://github.com/theos/sdks/releases/download/latest/iPhoneOS${SDK}.sdk.tar.xz"
-            echo "Fetching $URL"
-            curl -sSL "$URL" -o /tmp/sdk.tar.xz
-            rm -rf /tmp/sdks && mkdir -p /tmp/sdks
-            tar -xJf /tmp/sdk.tar.xz -C /tmp/sdks
-            rm -f /tmp/sdk.tar.xz
-            if [ -d "/tmp/sdks/iPhoneOS${SDK}.sdk" ]; then
+            SDK_URL=$(echo "$RELEASE" | grep -o "https://[^\"]*iPhoneOS${SDK}\.sdk[^\"]*" | head -n1 || true)
+            echo "SDK $SDK asset: $SDK_URL"
+            if [ -n "$SDK_URL" ]; then
+              curl -sSL "$SDK_URL" -o /tmp/sdk.archive
+              (tar -xJf /tmp/sdk.archive -C "$THEOS/sdks/" 2>/dev/null || tar -xzf /tmp/sdk.archive -C "$THEOS/sdks/" 2>/dev/null || unzip -q /tmp/sdk.archive -d "$THEOS/sdks/")
+            fi
+            if [ ! -d "$THEOS/sdks/iPhoneOS${SDK}.sdk" ]; then
+              echo "Falling back to sparse checkout of theos/sdks for $SDK"
+              rm -rf /tmp/sdks
+              git clone --depth=1 --filter=blob:none --sparse https://github.com/theos/sdks.git /tmp/sdks
+              (cd /tmp/sdks && git sparse-checkout set "iPhoneOS${SDK}.sdk")
               mv "/tmp/sdks/iPhoneOS${SDK}.sdk" "$THEOS/sdks/"
             fi
           done
