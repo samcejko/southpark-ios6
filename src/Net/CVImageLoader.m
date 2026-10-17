@@ -322,6 +322,13 @@ static UIImage *CVDecodeImage(NSData *data, CGFloat maxPixels, BOOL animate, NSU
     return token;
 }
 
+- (id)loadImageURL:(NSString *)url completion:(void (^)(UIImage *image, NSError *error))completion
+{
+    return [self loadImage:url maxPixels:1024 completion:^(UIImage *image) {
+        if (completion) completion(image, image ? nil : CVMakeError(CVErrorBadResponse, @"Failed to load image"));
+    }];
+}
+
 - (void)cancelToken:(id)token
 {
     if (![token isKindOfClass:[CVImageToken class]]) return;

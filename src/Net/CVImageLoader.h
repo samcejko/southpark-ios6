@@ -21,6 +21,7 @@ extern NSString * const CVImageDidLoadNotification;
 // The returned token cancels the interest in the image (a reused cell); a download nobody waits for is dropped
 // while it is still queued. maxPixels limits the longer side of the decoded image (0 = 1024).
 - (id)loadImage:(NSString *)url maxPixels:(CGFloat)maxPixels completion:(void (^)(UIImage *image))completion;
+- (id)loadImageURL:(NSString *)url completion:(void (^)(UIImage *image, NSError *error))completion;
 - (void)cancelToken:(id)token;
 
 @property (nonatomic) BOOL animationAllowed;         // default YES; NO = the first frame of animated images only

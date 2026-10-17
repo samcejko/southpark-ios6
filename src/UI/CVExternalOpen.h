@@ -18,6 +18,7 @@
 + (void)presentOpenInForURL:(NSURL *)url from:(UIViewController *)controller anchor:(UIView *)anchor;
 // Sharing: iOS 6 the chooser with "Copy link"; iOS 7 and newer the system share sheet (UIActivityViewController)
 + (void)presentShareSheetForURL:(NSURL *)url from:(UIViewController *)controller anchor:(UIView *)anchor;
++ (void)openURLString:(NSString *)url fromViewController:(UIViewController *)controller;
 
 + (BOOL)surfariAvailable;
 // The sister app that shows this address ("Tubie", "Twitcher", "TikTak"), or nil: not one of their sites, or not installed

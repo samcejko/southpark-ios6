@@ -119,9 +119,14 @@ static BOOL CVHostIsUnder(NSString *host, NSString *domain)
 + (void)openLinkURL:(NSURL *)url from:(UIViewController *)controller anchor:(UIView *)anchor
 {
     if (!url) return;
-    // kick.com: the channel page inside the app (the same as kicker:open?url=)
-    if ([CVNavigator openKickURL:url from:controller]) return;
+    if ([CVNavigator openSouthParkURL:url from:controller]) return;
     [self presentOpenInForURL:url from:controller anchor:anchor];
+}
+
++ (void)openURLString:(NSString *)url fromViewController:(UIViewController *)controller
+{
+    if (!url.length) return;
+    [self openLink:url from:controller anchor:nil];
 }
 
 + (void)openLinks:(NSArray *)links from:(UIViewController *)controller anchor:(UIView *)anchor
