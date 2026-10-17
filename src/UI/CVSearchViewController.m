@@ -11,7 +11,10 @@
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) NSArray *results;
 @property (nonatomic, strong) UIActivityIndicatorView *spinner;
-@property (nonatomic, strong) UILabel *statusLabel;
+@property (nonatomic, strong) UIView *emptyView;
+@property (nonatomic, strong) UIImageView *emptyImageView;
+@property (nonatomic, strong) UILabel *emptyTitleLabel;
+@property (nonatomic, strong) UILabel *emptySubtitleLabel;
 @property (nonatomic, copy) NSString *lastQuery;
 @property (nonatomic, assign) BOOL isIndexing;
 @end
@@ -56,20 +59,48 @@
     self.spinner.center = CGPointMake(self.view.bounds.size.width / 2.0, 120);
     [self.view addSubview:self.spinner];
 
-    self.statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, self.view.bounds.size.width - 40, 60)];
-    self.statusLabel.numberOfLines = 2;
-    self.statusLabel.textAlignment = NSTextAlignmentCenter;
-    self.statusLabel.font = [UIFont systemFontOfSize:14];
-    self.statusLabel.backgroundColor = [UIColor clearColor];
-    self.statusLabel.text = L(@"Type a keyword, episode title, or season/episode (e.g. S01E01).");
-    [self.view addSubview:self.statusLabel];
+    self.emptyView = [[UIView alloc] init];
+    self.emptyView.hidden = NO;
+    [self.view addSubview:self.emptyView];
+
+    self.emptyImageView = [[UIImageView alloc] init];
+    self.emptyImageView.contentMode = UIViewContentModeCenter;
+    [self.emptyView addSubview:self.emptyImageView];
+
+    self.emptyTitleLabel = [[UILabel alloc] init];
+    self.emptyTitleLabel.textAlignment = NSTextAlignmentCenter;
+    self.emptyTitleLabel.font = [UIFont boldSystemFontOfSize:17];
+    self.emptyTitleLabel.backgroundColor = [UIColor clearColor];
+    [self.emptyView addSubview:self.emptyTitleLabel];
+
+    self.emptySubtitleLabel = [[UILabel alloc] init];
+    self.emptySubtitleLabel.numberOfLines = 3;
+    self.emptySubtitleLabel.textAlignment = NSTextAlignmentCenter;
+    self.emptySubtitleLabel.font = [UIFont systemFontOfSize:13];
+    self.emptySubtitleLabel.backgroundColor = [UIColor clearColor];
+    [self.emptyView addSubview:self.emptySubtitleLabel];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applyTheme) name:CVThemeDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self.tableView selector:@selector(reloadData) name:@"CVHistoryDidChangeNotification" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self.tableView selector:@selector(reloadData) name:@"CVFavoritesDidChangeNotification" object:nil];
 
     [self applyTheme];
+    [self updateEmptyStateForQuery:@""];
     [self checkAndWarmIndex];
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    CGFloat w = self.view.bounds.size.width;
+    CGFloat h = self.view.bounds.size.height;
+
+    CGFloat emptyW = MIN(w - 40, 320);
+    CGFloat emptyH = 150;
+    self.emptyView.frame = CGRectMake((w - emptyW) / 2.0, 44 + (h - 44 - emptyH) / 2.0 - 20, emptyW, emptyH);
+    self.emptyImageView.frame = CGRectMake((emptyW - 48) / 2.0, 0, 48, 48);
+    self.emptyTitleLabel.frame = CGRectMake(0, 56, emptyW, 24);
+    self.emptySubtitleLabel.frame = CGRectMake(0, 84, emptyW, 60);
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -86,10 +117,29 @@
     self.view.backgroundColor = [theme backgroundColor];
     self.tableView.backgroundColor = [theme backgroundColor];
     self.tableView.separatorColor = [theme separatorColor];
-    self.statusLabel.textColor = [theme secondaryTextColor];
+    self.emptyTitleLabel.textColor = [theme primaryTextColor];
+    self.emptySubtitleLabel.textColor = [theme secondaryTextColor];
     self.spinner.activityIndicatorViewStyle = theme.isDark ? UIActivityIndicatorViewStyleWhite : UIActivityIndicatorViewStyleGray;
     [theme applyToSearchBar:self.searchBar];
     [theme applyToNavigationBar:self.navigationController.navigationBar];
+    [self updateEmptyStateForQuery:self.lastQuery];
+}
+
+- (void)updateEmptyStateForQuery:(NSString *)query
+{
+    CVTheme *theme = [CVTheme shared];
+    self.emptyImageView.image = [theme tabIconSearch];
+    if (!query.length) {
+        self.emptyTitleLabel.text = L(@"Find South Park");
+        self.emptySubtitleLabel.text = L(@"Search by episode title, season (e.g. S05), episode code (S05E04), or keywords.");
+        self.emptyView.hidden = NO;
+    } else if (!self.results.count) {
+        self.emptyTitleLabel.text = L(@"No Matches Found");
+        self.emptySubtitleLabel.text = [NSString stringWithFormat:L(@"No episodes or clips match \"%@\"."), query];
+        self.emptyView.hidden = NO;
+    } else {
+        self.emptyView.hidden = YES;
+    }
 }
 
 - (void)checkAndWarmIndex
@@ -119,27 +169,20 @@
 
     if (!trimmed.length) {
         self.results = @[];
-        self.statusLabel.text = L(@"Type a keyword, episode title, or season/episode (e.g. S01E01).");
-        self.statusLabel.hidden = NO;
+        [self updateEmptyStateForQuery:@""];
         [self.spinner stopAnimating];
         [self.tableView reloadData];
         return;
     }
 
     [self.spinner startAnimating];
-    self.statusLabel.hidden = YES;
+    self.emptyView.hidden = YES;
 
     [[CVAPI shared] searchEpisodesAndClips:trimmed completion:^(NSArray *results, NSError *error) {
         [self.spinner stopAnimating];
         self.results = results ?: @[];
         [self.tableView reloadData];
-
-        if (!self.results.count) {
-            self.statusLabel.text = [NSString stringWithFormat:L(@"No results found for \"%@\"."), trimmed];
-            self.statusLabel.hidden = NO;
-        } else {
-            self.statusLabel.hidden = YES;
-        }
+        [self updateEmptyStateForQuery:trimmed];
     }];
 }
 

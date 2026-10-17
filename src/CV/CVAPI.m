@@ -289,30 +289,35 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableArray *results = [NSMutableArray array];
-        NSMutableSet *seenUUIDs = [NSMutableSet set];
+        NSMutableSet *seenResultKeys = [NSMutableSet set];
+        NSMutableArray<CVEpisode *> *allCandidates = [NSMutableArray array];
+        NSMutableSet *seenCandidateKeys = [NSMutableSet set];
 
-        // Gather all candidates from catalog first
-        NSArray<CVEpisode *> *catalog = [self allCatalogEpisodes];
-        NSMutableArray<CVEpisode *> *allCandidates = [NSMutableArray arrayWithArray:catalog];
-
-        // Also check cached episodes (which might have dynamic or extra items)
+        // 1. Gather cached episodes first (they have the freshest metadata)
         NSArray *seasons = [[CVCache shared] objectForKey:@"seasons_list"];
         for (CVSeason *s in seasons) {
             NSString *key = [NSString stringWithFormat:@"episodes_season_%ld", (long)s.seasonNumber];
             NSArray *eps = [[CVCache shared] objectForKey:key];
-            if (eps.count) {
-                for (CVEpisode *ep in eps) {
-                    if (ep.uuid.length && ![seenUUIDs containsObject:ep.uuid]) {
-                        [seenUUIDs addObject:ep.uuid];
-                        if (![allCandidates containsObject:ep]) {
-                            [allCandidates addObject:ep];
-                        }
-                    }
+            for (CVEpisode *ep in eps) {
+                NSString *k = ep.uuid.length ? ep.uuid : [NSString stringWithFormat:@"s%ld_e%ld", (long)ep.seasonNumber, (long)ep.episodeNumber];
+                if (k.length && ![seenCandidateKeys containsObject:k]) {
+                    [seenCandidateKeys addObject:k];
+                    [allCandidates addObject:ep];
                 }
             }
         }
 
-        // Search episodes
+        // 2. Add remaining episodes from catalog
+        NSArray<CVEpisode *> *catalog = [self allCatalogEpisodes];
+        for (CVEpisode *ep in catalog) {
+            NSString *k = ep.uuid.length ? ep.uuid : [NSString stringWithFormat:@"s%ld_e%ld", (long)ep.seasonNumber, (long)ep.episodeNumber];
+            if (k.length && ![seenCandidateKeys containsObject:k]) {
+                [seenCandidateKeys addObject:k];
+                [allCandidates addObject:ep];
+            }
+        }
+
+        // 3. Search episodes
         for (CVEpisode *ep in allCandidates) {
             NSString *t = ep.title.lowercaseString ?: @"";
             NSString *desc = ep.summary.lowercaseString ?: @"";
@@ -331,8 +336,36 @@ static NSString * const CVSiteBase = @"https://www.southparkstudios.com";
                 }
             }
             if (allMatch) {
-                if (ep.uuid.length) [seenUUIDs addObject:ep.uuid];
-                [results addObject:ep];
+                NSString *resKey = ep.uuid.length ? ep.uuid : [NSString stringWithFormat:@"s%ld_e%ld", (long)ep.seasonNumber, (long)ep.episodeNumber];
+                if (!resKey.length) resKey = ep.title;
+                if (resKey.length && ![seenResultKeys containsObject:resKey]) {
+                    [seenResultKeys addObject:resKey];
+                    [results addObject:ep];
+                }
+            }
+        }
+
+        // 4. Also search any cached clips
+        NSArray *cachedClips = [[CVCache shared] objectForKey:@"clips_page_1"];
+        for (CVClip *clip in cachedClips) {
+            NSString *t = clip.title.lowercaseString ?: @"";
+            NSString *desc = clip.summary.lowercaseString ?: @"";
+            NSString *se = clip.seasonEpisodeString.lowercaseString ?: @"";
+            NSString *combined = [NSString stringWithFormat:@"%@ %@ %@", t, desc, se];
+
+            BOOL allMatch = YES;
+            for (NSString *w in nonEmptyWords) {
+                if ([combined rangeOfString:w].location == NSNotFound) {
+                    allMatch = NO;
+                    break;
+                }
+            }
+            if (allMatch) {
+                NSString *resKey = clip.uuid.length ? clip.uuid : clip.title;
+                if (resKey.length && ![seenResultKeys containsObject:resKey]) {
+                    [seenResultKeys addObject:resKey];
+                    [results addObject:clip];
+                }
             }
         }
 

@@ -27,7 +27,7 @@
 
 + (CGFloat)heightForWidth:(CGFloat)width
 {
-    return 88.0;
+    return CVIsPad() ? 104.0 : 88.0;
 }
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
@@ -57,18 +57,18 @@
         [_durationPill addSubview:_durationLabel];
 
         _titleLabel = [[UILabel alloc] init];
-        _titleLabel.font = [UIFont boldSystemFontOfSize:14];
+        _titleLabel.font = [UIFont boldSystemFontOfSize:CVIsPad() ? 16 : 14];
         _titleLabel.backgroundColor = [UIColor clearColor];
         [self.contentView addSubview:_titleLabel];
 
         _subtitleLabel = [[UILabel alloc] init];
-        _subtitleLabel.font = [UIFont systemFontOfSize:11];
+        _subtitleLabel.font = [UIFont systemFontOfSize:CVIsPad() ? 12 : 11];
         _subtitleLabel.backgroundColor = [UIColor clearColor];
         [self.contentView addSubview:_subtitleLabel];
 
         _summaryLabel = [[UILabel alloc] init];
-        _summaryLabel.font = [UIFont systemFontOfSize:11];
-        _summaryLabel.numberOfLines = 2;
+        _summaryLabel.font = [UIFont systemFontOfSize:CVIsPad() ? 13 : 11];
+        _summaryLabel.numberOfLines = CVIsPad() ? 3 : 2;
         _summaryLabel.backgroundColor = [UIColor clearColor];
         [self.contentView addSubview:_summaryLabel];
 
@@ -118,12 +118,15 @@
     self.progressBar.frame = CGRectMake(0, thumbH - 3, thumbW, 3);
 
     // Text on the right
-    CGFloat textX = CGRectGetMaxX(self.thumbView.frame) + 10;
-    CGFloat textW = w - textX - 10;
+    CGFloat textX = CGRectGetMaxX(self.thumbView.frame) + (CVIsPad() ? 14 : 10);
+    CGFloat textW = w - textX - (CVIsPad() ? 16 : 10);
 
-    self.titleLabel.frame = CGRectMake(textX, 8, textW, 18);
-    self.subtitleLabel.frame = CGRectMake(textX, 28, textW, 14);
-    self.summaryLabel.frame = CGRectMake(textX, 44, textW, h - 50);
+    CGFloat titleH = CVIsPad() ? 22 : 18;
+    CGFloat subH = CVIsPad() ? 16 : 14;
+    self.titleLabel.frame = CGRectMake(textX, 8, textW, titleH);
+    self.subtitleLabel.frame = CGRectMake(textX, 8 + titleH + 2, textW, subH);
+    CGFloat summaryY = 8 + titleH + 2 + subH + 2;
+    self.summaryLabel.frame = CGRectMake(textX, summaryY, textW, h - summaryY - 6);
 }
 
 - (void)configureWithEpisode:(CVEpisode *)episode
@@ -188,7 +191,18 @@
 
     self.titleLabel.text = clip.title ?: @"Clip";
     self.summaryLabel.text = clip.summary ?: @"";
-    self.subtitleLabel.text = clip.airDate ?: @"";
+
+    NSString *sub = @"";
+    if (clip.seasonEpisodeString.length) sub = clip.seasonEpisodeString;
+    if (clip.airDate.length) {
+        if (sub.length) {
+            sub = [sub stringByAppendingFormat:@"  •  %@", clip.airDate];
+        } else {
+            sub = clip.airDate;
+        }
+    }
+    self.subtitleLabel.text = sub;
+
     self.durationLabel.text = clip.durationString ?: @"";
     self.durationPill.hidden = (clip.durationString.length == 0 || [clip.durationString isEqualToString:@"00:00"]);
     self.progressBar.hidden = YES;

@@ -6,6 +6,7 @@
 #import "CVHistory.h"
 #import "CVTheme.h"
 #import "CVCommon.h"
+#import "CVModern.h"
 
 typedef NS_ENUM(NSInteger, CVLibrarySegment) {
     CVLibrarySegmentFavorites = 0,
@@ -16,7 +17,10 @@ typedef NS_ENUM(NSInteger, CVLibrarySegment) {
 @property (nonatomic, strong) UISegmentedControl *segmentedControl;
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) NSMutableArray *items;
-@property (nonatomic, strong) UILabel *emptyLabel;
+@property (nonatomic, strong) UIView *emptyView;
+@property (nonatomic, strong) UIImageView *emptyImageView;
+@property (nonatomic, strong) UILabel *emptyTitleLabel;
+@property (nonatomic, strong) UILabel *emptySubtitleLabel;
 @property (nonatomic, strong) UIBarButtonItem *settingsItem;
 @property (nonatomic, strong) UIBarButtonItem *clearItem;
 @property (nonatomic, assign) CVLibrarySegment currentSegment;
@@ -68,13 +72,26 @@ typedef NS_ENUM(NSInteger, CVLibrarySegment) {
     self.tableView.rowHeight = [CVEpisodeCell heightForWidth:self.view.bounds.size.width];
     [self.view addSubview:self.tableView];
 
-    self.emptyLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, self.view.bounds.size.width - 40, 70)];
-    self.emptyLabel.numberOfLines = 3;
-    self.emptyLabel.textAlignment = NSTextAlignmentCenter;
-    self.emptyLabel.font = [UIFont systemFontOfSize:14];
-    self.emptyLabel.backgroundColor = [UIColor clearColor];
-    self.emptyLabel.hidden = YES;
-    [self.view addSubview:self.emptyLabel];
+    self.emptyView = [[UIView alloc] init];
+    self.emptyView.hidden = YES;
+    [self.view addSubview:self.emptyView];
+
+    self.emptyImageView = [[UIImageView alloc] init];
+    self.emptyImageView.contentMode = UIViewContentModeCenter;
+    [self.emptyView addSubview:self.emptyImageView];
+
+    self.emptyTitleLabel = [[UILabel alloc] init];
+    self.emptyTitleLabel.textAlignment = NSTextAlignmentCenter;
+    self.emptyTitleLabel.font = [UIFont boldSystemFontOfSize:17];
+    self.emptyTitleLabel.backgroundColor = [UIColor clearColor];
+    [self.emptyView addSubview:self.emptyTitleLabel];
+
+    self.emptySubtitleLabel = [[UILabel alloc] init];
+    self.emptySubtitleLabel.numberOfLines = 3;
+    self.emptySubtitleLabel.textAlignment = NSTextAlignmentCenter;
+    self.emptySubtitleLabel.font = [UIFont systemFontOfSize:13];
+    self.emptySubtitleLabel.backgroundColor = [UIColor clearColor];
+    [self.emptyView addSubview:self.emptySubtitleLabel];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applyTheme) name:CVThemeDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dataChanged) name:CVFavoritesDidChangeNotification object:nil];
@@ -83,6 +100,20 @@ typedef NS_ENUM(NSInteger, CVLibrarySegment) {
     [self updateNavigationButtons];
     [self applyTheme];
     [self reloadData];
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    CGFloat w = self.view.bounds.size.width;
+    CGFloat h = self.view.bounds.size.height;
+
+    CGFloat emptyW = MIN(w - 40, 320);
+    CGFloat emptyH = 150;
+    self.emptyView.frame = CGRectMake((w - emptyW) / 2.0, (h - emptyH) / 2.0 - 20, emptyW, emptyH);
+    self.emptyImageView.frame = CGRectMake((emptyW - 48) / 2.0, 0, 48, 48);
+    self.emptyTitleLabel.frame = CGRectMake(0, 56, emptyW, 24);
+    self.emptySubtitleLabel.frame = CGRectMake(0, 84, emptyW, 60);
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -99,8 +130,14 @@ typedef NS_ENUM(NSInteger, CVLibrarySegment) {
     self.view.backgroundColor = [theme backgroundColor];
     self.tableView.backgroundColor = [theme backgroundColor];
     self.tableView.separatorColor = [theme separatorColor];
-    self.emptyLabel.textColor = [theme secondaryTextColor];
+    self.emptyTitleLabel.textColor = [theme primaryTextColor];
+    self.emptySubtitleLabel.textColor = [theme secondaryTextColor];
     [theme applyToNavigationBar:self.navigationController.navigationBar];
+
+    CVModernStyleSegmentedControl(self.segmentedControl, [theme isDark]);
+    if ([theme isDark]) {
+        self.segmentedControl.tintColor = [theme accentColor];
+    }
 }
 
 - (void)updateNavigationButtons
@@ -185,14 +222,19 @@ typedef NS_ENUM(NSInteger, CVLibrarySegment) {
     [self updateNavigationButtons];
 
     if (self.items.count == 0) {
-        self.emptyLabel.hidden = NO;
+        self.emptyView.hidden = NO;
+        CVTheme *theme = [CVTheme shared];
         if (self.currentSegment == CVLibrarySegmentFavorites) {
-            self.emptyLabel.text = L(@"You have no favorites yet.\nTap the star icon on any episode to save it here.");
+            self.emptyImageView.image = [theme starIconFilled:YES color:[theme accentColor] size:40];
+            self.emptyTitleLabel.text = L(@"No Favorites Yet");
+            self.emptySubtitleLabel.text = L(@"Tap the star on any episode or clip to save it here for quick access.");
         } else {
-            self.emptyLabel.text = L(@"No watch history yet.\nEpisodes you start watching will appear here.");
+            self.emptyImageView.image = [theme replayIcon];
+            self.emptyTitleLabel.text = L(@"No Watch History");
+            self.emptySubtitleLabel.text = L(@"Episodes you watch will appear here so you can easily resume where you left off.");
         }
     } else {
-        self.emptyLabel.hidden = YES;
+        self.emptyView.hidden = YES;
     }
 }
 

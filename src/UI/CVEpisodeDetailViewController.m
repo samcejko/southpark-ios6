@@ -5,6 +5,8 @@
 #import "CVFavorites.h"
 #import "CVHistory.h"
 #import "CVExternalOpen.h"
+#import "CVAPI.h"
+#import "CVCache.h"
 #import "CVCommon.h"
 
 @interface CVEpisodeDetailViewController ()
@@ -15,10 +17,15 @@
 @property (nonatomic, strong) UIButton *playOverlayButton;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *metaLabel;
+@property (nonatomic, strong) UIView *badgesView;
 @property (nonatomic, strong) UIButton *playButton;
 @property (nonatomic, strong) UIButton *restartButton;
 @property (nonatomic, strong) UIButton *favoriteButton;
 @property (nonatomic, strong) UIButton *webButton;
+@property (nonatomic, strong) UIButton *prevEpisodeButton;
+@property (nonatomic, strong) UIButton *nextEpisodeButton;
+@property (nonatomic, strong) CVEpisode *prevEpisode;
+@property (nonatomic, strong) CVEpisode *nextEpisode;
 @property (nonatomic, strong) UITextView *summaryTextView;
 @end
 
@@ -81,6 +88,11 @@
     self.metaLabel.backgroundColor = [UIColor clearColor];
     [self.scrollView addSubview:self.metaLabel];
 
+    // Badges row
+    self.badgesView = [[UIView alloc] init];
+    self.badgesView.backgroundColor = [UIColor clearColor];
+    [self.scrollView addSubview:self.badgesView];
+
     // Action buttons
     self.playButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [self.playButton addTarget:self action:@selector(playTapped) forControlEvents:UIControlEventTouchUpInside];
@@ -106,6 +118,18 @@
     [self.webButton addTarget:self action:@selector(webTapped) forControlEvents:UIControlEventTouchUpInside];
     self.webButton.titleLabel.font = [UIFont systemFontOfSize:13];
     [self.scrollView addSubview:self.webButton];
+
+    self.prevEpisodeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [self.prevEpisodeButton addTarget:self action:@selector(prevEpisodeTapped) forControlEvents:UIControlEventTouchUpInside];
+    self.prevEpisodeButton.titleLabel.font = [UIFont systemFontOfSize:13];
+    self.prevEpisodeButton.hidden = YES;
+    [self.scrollView addSubview:self.prevEpisodeButton];
+
+    self.nextEpisodeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [self.nextEpisodeButton addTarget:self action:@selector(nextEpisodeTapped) forControlEvents:UIControlEventTouchUpInside];
+    self.nextEpisodeButton.titleLabel.font = [UIFont systemFontOfSize:13];
+    self.nextEpisodeButton.hidden = YES;
+    [self.scrollView addSubview:self.nextEpisodeButton];
 
     // Summary
     self.summaryTextView = [[UITextView alloc] init];
@@ -150,6 +174,14 @@
     [self.webButton setBackgroundImage:[theme buttonImageHighlighted:NO] forState:UIControlStateNormal];
     [self.webButton setBackgroundImage:[theme buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
     [self.webButton setTitleColor:[theme primaryTextColor] forState:UIControlStateNormal];
+
+    [self.prevEpisodeButton setBackgroundImage:[theme buttonImageHighlighted:NO] forState:UIControlStateNormal];
+    [self.prevEpisodeButton setBackgroundImage:[theme buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
+    [self.prevEpisodeButton setTitleColor:[theme primaryTextColor] forState:UIControlStateNormal];
+
+    [self.nextEpisodeButton setBackgroundImage:[theme buttonImageHighlighted:NO] forState:UIControlStateNormal];
+    [self.nextEpisodeButton setBackgroundImage:[theme buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
+    [self.nextEpisodeButton setTitleColor:[theme primaryTextColor] forState:UIControlStateNormal];
 }
 
 - (void)populateData
@@ -164,15 +196,28 @@
         self.metaLabel.text = m;
         self.summaryTextView.text = self.episode.summary ?: @"";
         thumb = self.episode.thumbURL;
+        [self findAdjacentEpisodes];
     } else if (self.clip) {
         self.titleLabel.text = self.clip.title ?: @"";
-        NSString *m = self.clip.durationString ?: @"";
-        if (self.clip.airDate.length) m = [m stringByAppendingFormat:@"  •  %@", self.clip.airDate];
+        NSString *m = @"";
+        if (self.clip.seasonEpisodeString.length) m = self.clip.seasonEpisodeString;
+        if (self.clip.durationString.length) {
+            if (m.length) m = [m stringByAppendingFormat:@"  •  %@", self.clip.durationString];
+            else m = self.clip.durationString;
+        }
+        if (self.clip.airDate.length) {
+            if (m.length) m = [m stringByAppendingFormat:@"  •  %@", self.clip.airDate];
+            else m = self.clip.airDate;
+        }
         self.metaLabel.text = m;
         self.summaryTextView.text = self.clip.summary ?: @"";
         thumb = self.clip.thumbURL;
         self.favoriteButton.hidden = YES;
+        self.prevEpisodeButton.hidden = YES;
+        self.nextEpisodeButton.hidden = YES;
     }
+
+    [self updateBadges];
 
     self.bannerView.image = [[CVTheme shared] thumbnailPlaceholder];
     if (thumb.length) {
@@ -180,6 +225,119 @@
         [[CVImageLoader shared] loadImageURL:thumb completion:^(UIImage *image, NSError *error) {
             if (image) weakSelf.bannerView.image = image;
         }];
+    }
+}
+
+- (void)findAdjacentEpisodes
+{
+    self.prevEpisode = nil;
+    self.nextEpisode = nil;
+    if (!self.episode || self.episode.seasonNumber <= 0) {
+        self.prevEpisodeButton.hidden = YES;
+        self.nextEpisodeButton.hidden = YES;
+        return;
+    }
+
+    NSString *key = [NSString stringWithFormat:@"episodes_season_%ld", (long)self.episode.seasonNumber];
+    NSArray *seasonEps = [[CVCache shared] objectForKey:key];
+    if (!seasonEps.count) {
+        NSArray *catalog = [[CVAPI shared] allCatalogEpisodes];
+        NSMutableArray *filtered = [NSMutableArray array];
+        for (CVEpisode *ep in catalog) {
+            if (ep.seasonNumber == self.episode.seasonNumber) {
+                [filtered addObject:ep];
+            }
+        }
+        seasonEps = filtered;
+    }
+
+    if (seasonEps.count) {
+        NSInteger currentIndex = NSNotFound;
+        for (NSInteger i = 0; i < seasonEps.count; i++) {
+            CVEpisode *ep = seasonEps[i];
+            if ((self.episode.uuid.length && [ep.uuid isEqualToString:self.episode.uuid]) ||
+                (ep.episodeNumber == self.episode.episodeNumber)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex != NSNotFound) {
+            if (currentIndex > 0) {
+                self.prevEpisode = seasonEps[currentIndex - 1];
+            }
+            if (currentIndex + 1 < seasonEps.count) {
+                self.nextEpisode = seasonEps[currentIndex + 1];
+            }
+        }
+    }
+
+    if (self.prevEpisode) {
+        NSString *code = self.prevEpisode.seasonEpisodeString.length ? self.prevEpisode.seasonEpisodeString : [NSString stringWithFormat:@"E%ld", (long)self.prevEpisode.episodeNumber];
+        [self.prevEpisodeButton setTitle:[NSString stringWithFormat:@"◀ %@", code] forState:UIControlStateNormal];
+        self.prevEpisodeButton.hidden = NO;
+    } else {
+        self.prevEpisodeButton.hidden = YES;
+    }
+
+    if (self.nextEpisode) {
+        NSString *code = self.nextEpisode.seasonEpisodeString.length ? self.nextEpisode.seasonEpisodeString : [NSString stringWithFormat:@"E%ld", (long)self.nextEpisode.episodeNumber];
+        [self.nextEpisodeButton setTitle:[NSString stringWithFormat:@"%@ ▶", code] forState:UIControlStateNormal];
+        self.nextEpisodeButton.hidden = NO;
+    } else {
+        self.nextEpisodeButton.hidden = YES;
+    }
+}
+
+- (void)updateBadges
+{
+    for (UIView *v in self.badgesView.subviews) {
+        [v removeFromSuperview];
+    }
+
+    NSMutableArray *badges = [NSMutableArray array];
+    if (self.episode) {
+        if (self.episode.seasonEpisodeString.length) {
+            [badges addObject:self.episode.seasonEpisodeString];
+        } else if (self.episode.seasonNumber > 0) {
+            [badges addObject:[NSString stringWithFormat:@"S%ld • E%ld", (long)self.episode.seasonNumber, (long)self.episode.episodeNumber]];
+        }
+        if (self.episode.durationString.length && ![self.episode.durationString isEqualToString:@"00:00"]) {
+            [badges addObject:self.episode.durationString];
+        }
+        [badges addObject:self.episode.rating.length ? self.episode.rating : @"TV-MA"];
+        [badges addObject:@"HD"];
+        [badges addObject:@"CC"];
+    } else if (self.clip) {
+        if (self.clip.seasonEpisodeString.length) {
+            [badges addObject:self.clip.seasonEpisodeString];
+        }
+        if (self.clip.durationString.length && ![self.clip.durationString isEqualToString:@"00:00"]) {
+            [badges addObject:self.clip.durationString];
+        }
+        [badges addObject:@"CLIP"];
+        [badges addObject:@"HD"];
+    }
+
+    CGFloat x = 0;
+    for (NSString *text in badges) {
+        CGSize s = [text sizeWithFont:[UIFont boldSystemFontOfSize:11]];
+        CGFloat badgeW = s.width + 12;
+        CGFloat badgeH = 20;
+
+        UILabel *badge = [[UILabel alloc] initWithFrame:CGRectMake(x, 0, badgeW, badgeH)];
+        badge.font = [UIFont boldSystemFontOfSize:10];
+        badge.textColor = [UIColor colorWithWhite:0.85 alpha:1.0];
+        badge.backgroundColor = [UIColor colorWithWhite:0.25 alpha:0.45];
+        badge.layer.cornerRadius = 3.0;
+        badge.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.18].CGColor;
+        badge.layer.borderWidth = 0.5;
+        badge.clipsToBounds = YES;
+        badge.textAlignment = NSTextAlignmentCenter;
+        badge.text = text;
+        [self.badgesView addSubview:badge];
+
+        x += badgeW + 6;
     }
 }
 
@@ -220,7 +378,10 @@
     y += 28;
 
     self.metaLabel.frame = CGRectMake(14, y, w - 28, 18);
-    y += 24;
+    y += 22;
+
+    self.badgesView.frame = CGRectMake(14, y, w - 28, 22);
+    y += 28;
 
     self.playButton.frame = CGRectMake(14, y, w - 28, 42);
     y += 50;
@@ -235,6 +396,12 @@
         self.favoriteButton.frame = CGRectMake(14, y, halfW, 36);
         self.webButton.frame = CGRectMake(14 + halfW + 8, y, halfW, 36);
         y += 44;
+
+        if (!self.prevEpisodeButton.hidden || !self.nextEpisodeButton.hidden) {
+            self.prevEpisodeButton.frame = CGRectMake(14, y, halfW, 34);
+            self.nextEpisodeButton.frame = CGRectMake(14 + halfW + 8, y, halfW, 34);
+            y += 42;
+        }
     } else {
         self.webButton.frame = CGRectMake(14, y, w - 28, 36);
         y += 44;
@@ -245,6 +412,26 @@
     y += sumSize.height + 30;
 
     self.scrollView.contentSize = CGSizeMake(w, y);
+}
+
+- (void)prevEpisodeTapped
+{
+    if (self.prevEpisode) {
+        self.episode = self.prevEpisode;
+        self.title = self.episode.title ?: L(@"Episode");
+        [self populateData];
+        [self updateButtons];
+    }
+}
+
+- (void)nextEpisodeTapped
+{
+    if (self.nextEpisode) {
+        self.episode = self.nextEpisode;
+        self.title = self.episode.title ?: L(@"Episode");
+        [self populateData];
+        [self updateButtons];
+    }
 }
 
 - (void)playTapped

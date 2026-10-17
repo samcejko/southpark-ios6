@@ -59,9 +59,11 @@
         _captionView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self addSubview:_captionView];
 
-        // Top bar
-        _topBar = [[UIView alloc] init];
-        _topBar.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
+        // Top bar with smooth gradient
+        UIImageView *topGrad = [[UIImageView alloc] init];
+        topGrad.userInteractionEnabled = YES;
+        topGrad.image = [[CVTheme shared] controlsGradientImageTop:YES];
+        _topBar = topGrad;
         [self addSubview:_topBar];
 
         _closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -73,6 +75,8 @@
         _titleLabel.font = [UIFont boldSystemFontOfSize:14];
         _titleLabel.textColor = [UIColor whiteColor];
         _titleLabel.backgroundColor = [UIColor clearColor];
+        _titleLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.75];
+        _titleLabel.shadowOffset = CGSizeMake(0, -1);
         [_topBar addSubview:_titleLabel];
 
         // Center controls
@@ -95,9 +99,11 @@
         [_skipForwardButton addTarget:self action:@selector(skipForwardTapped) forControlEvents:UIControlEventTouchUpInside];
         [_centerBar addSubview:_skipForwardButton];
 
-        // Bottom bar
-        _bottomBar = [[UIView alloc] init];
-        _bottomBar.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
+        // Bottom bar with smooth gradient
+        UIImageView *bottomGrad = [[UIImageView alloc] init];
+        bottomGrad.userInteractionEnabled = YES;
+        bottomGrad.image = [[CVTheme shared] controlsGradientImageTop:NO];
+        _bottomBar = bottomGrad;
         [self addSubview:_bottomBar];
 
         _elapsedLabel = [[UILabel alloc] init];
@@ -109,6 +115,7 @@
         [_bottomBar addSubview:_elapsedLabel];
 
         _scrubber = [[UISlider alloc] init];
+        _scrubber.continuous = YES;
         _scrubber.minimumValue = 0;
         _scrubber.maximumValue = 1;
         _scrubber.value = 0;
@@ -127,15 +134,19 @@
         _ccButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_ccButton setTitle:@"CC" forState:UIControlStateNormal];
         _ccButton.titleLabel.font = [UIFont boldSystemFontOfSize:11];
-        _ccButton.titleLabel.backgroundColor = [UIColor clearColor];
-        [_ccButton setTitleColor:[UIColor colorWithWhite:1 alpha:0.5] forState:UIControlStateNormal];
+        _ccButton.layer.cornerRadius = 4.0;
+        _ccButton.clipsToBounds = YES;
+        _ccButton.backgroundColor = [UIColor colorWithWhite:0.25 alpha:0.6];
+        [_ccButton setTitleColor:[UIColor colorWithWhite:1 alpha:0.6] forState:UIControlStateNormal];
         [_ccButton addTarget:self action:@selector(ccTapped) forControlEvents:UIControlEventTouchUpInside];
         [_bottomBar addSubview:_ccButton];
 
         _qualityButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_qualityButton setTitle:@"Auto" forState:UIControlStateNormal];
         _qualityButton.titleLabel.font = [UIFont boldSystemFontOfSize:11];
-        _qualityButton.titleLabel.backgroundColor = [UIColor clearColor];
+        _qualityButton.layer.cornerRadius = 4.0;
+        _qualityButton.clipsToBounds = YES;
+        _qualityButton.backgroundColor = [UIColor colorWithWhite:0.25 alpha:0.6];
         [_qualityButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [_qualityButton addTarget:self action:@selector(qualityTapped) forControlEvents:UIControlEventTouchUpInside];
         [_bottomBar addSubview:_qualityButton];
@@ -184,8 +195,13 @@
 - (void)setSubtitlesEnabled:(BOOL)subtitlesEnabled
 {
     _subtitlesEnabled = subtitlesEnabled;
-    UIColor *c = subtitlesEnabled ? [[CVTheme shared] accentColor] : [UIColor colorWithWhite:1 alpha:0.5];
-    [self.ccButton setTitleColor:c forState:UIControlStateNormal];
+    if (subtitlesEnabled) {
+        self.ccButton.backgroundColor = [[CVTheme shared] accentColor];
+        [self.ccButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    } else {
+        self.ccButton.backgroundColor = [UIColor colorWithWhite:0.25 alpha:0.6];
+        [self.ccButton setTitleColor:[UIColor colorWithWhite:1 alpha:0.6] forState:UIControlStateNormal];
+    }
 }
 
 - (void)setQualityTitle:(NSString *)qualityTitle
@@ -259,10 +275,10 @@
 
     self.spinner.center = CGPointMake(w / 2.0, h / 2.0);
 
-    // Top bar: height 44
-    self.topBar.frame = CGRectMake(0, 0, w, 44);
-    self.closeButton.frame = CGRectMake(10, 4, 36, 36);
-    self.titleLabel.frame = CGRectMake(54, 10, w - 64, 24);
+    // Top bar: height 54
+    self.topBar.frame = CGRectMake(0, 0, w, 54);
+    self.closeButton.frame = CGRectMake(10, 8, 36, 36);
+    self.titleLabel.frame = CGRectMake(54, 14, w - 64, 24);
 
     // Center bar: 220 x 60 centered
     self.centerBar.frame = CGRectMake((w - 220) / 2.0, (h - 60) / 2.0, 220, 60);
@@ -270,15 +286,15 @@
     self.playPauseButton.frame = CGRectMake(88, 8, 44, 44);
     self.skipForwardButton.frame = CGRectMake(166, 8, 44, 44);
 
-    // Bottom bar: fixed height 54
-    self.bottomBar.frame = CGRectMake(0, h - 54, w, 54);
+    // Bottom bar: fixed height 60
+    self.bottomBar.frame = CGRectMake(0, h - 60, w, 60);
 
     // Scrubber row
-    self.elapsedLabel.frame = CGRectMake(10, 14, 46, 20);
-    self.scrubber.frame = CGRectMake(60, 12, w - 195, 24);
-    self.remainingLabel.frame = CGRectMake(w - 130, 14, 46, 20);
-    self.ccButton.frame = CGRectMake(w - 80, 8, 32, 32);
-    self.qualityButton.frame = CGRectMake(w - 44, 8, 38, 32);
+    self.elapsedLabel.frame = CGRectMake(10, 20, 46, 20);
+    self.scrubber.frame = CGRectMake(60, 18, w - 195, 24);
+    self.remainingLabel.frame = CGRectMake(w - 130, 20, 46, 20);
+    self.ccButton.frame = CGRectMake(w - 80, 16, 32, 26);
+    self.qualityButton.frame = CGRectMake(w - 44, 16, 38, 26);
 }
 
 #pragma mark - Actions

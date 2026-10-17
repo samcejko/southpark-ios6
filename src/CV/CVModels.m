@@ -83,6 +83,7 @@
 {
     [coder encodeObject:self.uuid forKey:@"uuid"];
     [coder encodeObject:self.title forKey:@"title"];
+    [coder encodeObject:self.seasonEpisodeString forKey:@"seasonEpisodeString"];
     [coder encodeObject:self.summary forKey:@"summary"];
     [coder encodeObject:self.airDate forKey:@"airDate"];
     [coder encodeObject:self.durationString forKey:@"durationString"];
@@ -97,6 +98,7 @@
     if (self) {
         _uuid = [coder decodeObjectForKey:@"uuid"];
         _title = [coder decodeObjectForKey:@"title"];
+        _seasonEpisodeString = [coder decodeObjectForKey:@"seasonEpisodeString"];
         _summary = [coder decodeObjectForKey:@"summary"];
         _airDate = [coder decodeObjectForKey:@"airDate"];
         _durationString = [coder decodeObjectForKey:@"durationString"];

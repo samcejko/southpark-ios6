@@ -246,12 +246,20 @@ static UIImage *CVTabSelectionImage(void)
     return [image resizableImageWithCapInsets:UIEdgeInsetsMake(10, 10, 10, 10) resizingMode:UIImageResizingModeStretch];
 }
 
-// Segments of a plain segmented control: light gray, the selected one darker
-static UIImage *CVSegmentImage(BOOL selected)
+// Segments of a plain segmented control: light gray or dark glossy for black theme
+static UIImage *CVSegmentImage(BOOL selected, BOOL black)
 {
-    CVGloss normal = { 0xfbfbfb, 0xe6e6e6, 0xdcdcdc, 0xc9c9c9, 0x8e8e8e, 0.0 };
-    CVGloss sel = { 0x9c9c9c, 0x7a7a7a, 0x717171, 0x5e5e5e, 0x4a4a4a, 0.15 };
-    CVGloss g = selected ? sel : normal;
+    CVGloss normalLight = { 0xfbfbfb, 0xe6e6e6, 0xdcdcdc, 0xc9c9c9, 0x8e8e8e, 0.0 };
+    CVGloss selLight = { 0x9c9c9c, 0x7a7a7a, 0x717171, 0x5e5e5e, 0x4a4a4a, 0.15 };
+    CVGloss normalDark = { 0x3e3e42, 0x2b2b2e, 0x242427, 0x161618, 0x111113, 0.12 };
+    CVGloss selDark = { 0x18181b, 0x121214, 0x0e0e10, 0x080809, 0x000000, 0.0 };
+
+    CVGloss g;
+    if (black) {
+        g = selected ? selDark : normalDark;
+    } else {
+        g = selected ? selLight : normalLight;
+    }
     CGSize size = CGSizeMake(14, 32);
     UIGraphicsBeginImageContextWithOptions(size, NO, 0);
     CGContextRef ctx = UIGraphicsGetCurrentContext();
@@ -274,11 +282,11 @@ static UIImage *CVSegmentImage(BOOL selected)
     return [image resizableImageWithCapInsets:UIEdgeInsetsMake(7, 6, 7, 6) resizingMode:UIImageResizingModeStretch];
 }
 
-static UIImage *CVSegmentDividerImage(void)
+static UIImage *CVSegmentDividerImage(BOOL black)
 {
     CGSize size = CGSizeMake(1, 32);
     UIGraphicsBeginImageContextWithOptions(size, NO, 0);
-    [CVHex(0x8e8e8e) setFill];
+    [CVHex(black ? 0x18181b : 0x8e8e8e) setFill];
     UIRectFill(CGRectMake(0, 0, size.width, size.height));
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
@@ -458,7 +466,7 @@ static void CVApplyTabBarAppearance(UITabBar *bar)
     a.shadowColor = nil;
     a.shadowImage = nil;
     a.selectionIndicatorImage = CVTabSelectionImage();
-    UIColor *selected = CVRGB(84, 164, 255), *normal = CVRGB(146, 146, 146);
+    UIColor *selected = CVRGB(235, 45, 55), *normal = CVRGB(146, 146, 146);
     for (UITabBarItemAppearance *item in @[ a.stackedLayoutAppearance, a.inlineLayoutAppearance, a.compactInlineLayoutAppearance ]) {
         item.selected.iconColor = selected;
         item.selected.titleTextAttributes = @{ NSForegroundColorAttributeName: selected, NSFontAttributeName: [UIFont boldSystemFontOfSize:10] };
@@ -609,10 +617,34 @@ void CVModernStyleTabBar(UITabBar *bar)
     [bar setBackgroundImage:CVTabBarImage()];
     [bar setSelectionIndicatorImage:CVTabSelectionImage()];
     [bar setShadowImage:CVClearImage(CGSizeMake(1, 1))];
-    [bar setTintColor:CVRGB(84, 164, 255)];
+    [bar setTintColor:CVRGB(235, 45, 55)];
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000
     if ([bar respondsToSelector:@selector(setUnselectedItemTintColor:)]) [bar setUnselectedItemTintColor:CVRGB(146, 146, 146)];
 #endif
+}
+
+void CVModernStyleSegmentedControl(UISegmentedControl *seg, BOOL dark)
+{
+    if (!seg || !CVModernIOS()) return;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+    if (CVAtLeast(13) && [seg respondsToSelector:@selector(setOverrideUserInterfaceStyle:)]) {
+        seg.overrideUserInterfaceStyle = dark ? 2 : 1; // 2 = UIUserInterfaceStyleDark
+    }
+#endif
+    [seg setBackgroundImage:CVSegmentImage(NO, dark) forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
+    [seg setBackgroundImage:CVSegmentImage(YES, dark) forState:UIControlStateSelected barMetrics:UIBarMetricsDefault];
+    [seg setBackgroundImage:CVSegmentImage(YES, dark) forState:UIControlStateHighlighted barMetrics:UIBarMetricsDefault];
+    UIImage *divider = CVSegmentDividerImage(dark);
+    [seg setDividerImage:divider forLeftSegmentState:UIControlStateNormal rightSegmentState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
+    [seg setDividerImage:divider forLeftSegmentState:UIControlStateSelected rightSegmentState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
+    [seg setDividerImage:divider forLeftSegmentState:UIControlStateNormal rightSegmentState:UIControlStateSelected barMetrics:UIBarMetricsDefault];
+    if (dark) {
+        [seg setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateNormal];
+        [seg setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateSelected];
+    } else {
+        [seg setTitleTextAttributes:CVEngravedTextAttributes(13, CVRGB(60, 60, 60)) forState:UIControlStateNormal];
+        [seg setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateSelected];
+    }
 }
 
 #pragma mark - The defaults for every bar (UIAppearance)
@@ -653,7 +685,7 @@ static void CVInstallAppearance(BOOL black)
         CVApplyLegacyToolbar([UIToolbar appearance], black);
         [[UITabBar appearance] setBackgroundImage:CVTabBarImage()];
         [[UITabBar appearance] setSelectionIndicatorImage:CVTabSelectionImage()];
-        [[UITabBar appearance] setTintColor:CVRGB(84, 164, 255)];
+        [[UITabBar appearance] setTintColor:CVRGB(235, 45, 55)];
     }
     [[UINavigationBar appearance] setTranslucent:NO];
     [[UIToolbar appearance] setTranslucent:NO];
@@ -673,15 +705,20 @@ static void CVInstallAppearance(BOOL black)
     // the iOS 6 blue of switches; glossy gray segmented controls with engraved labels
     [[UISwitch appearance] setOnTintColor:CVRGB(26, 108, 213)];
     UISegmentedControl *segment = [UISegmentedControl appearance];
-    [segment setBackgroundImage:CVSegmentImage(NO) forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
-    [segment setBackgroundImage:CVSegmentImage(YES) forState:UIControlStateSelected barMetrics:UIBarMetricsDefault];
-    [segment setBackgroundImage:CVSegmentImage(YES) forState:UIControlStateHighlighted barMetrics:UIBarMetricsDefault];
-    UIImage *divider = CVSegmentDividerImage();
+    [segment setBackgroundImage:CVSegmentImage(NO, black) forState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
+    [segment setBackgroundImage:CVSegmentImage(YES, black) forState:UIControlStateSelected barMetrics:UIBarMetricsDefault];
+    [segment setBackgroundImage:CVSegmentImage(YES, black) forState:UIControlStateHighlighted barMetrics:UIBarMetricsDefault];
+    UIImage *divider = CVSegmentDividerImage(black);
     [segment setDividerImage:divider forLeftSegmentState:UIControlStateNormal rightSegmentState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
     [segment setDividerImage:divider forLeftSegmentState:UIControlStateSelected rightSegmentState:UIControlStateNormal barMetrics:UIBarMetricsDefault];
     [segment setDividerImage:divider forLeftSegmentState:UIControlStateNormal rightSegmentState:UIControlStateSelected barMetrics:UIBarMetricsDefault];
-    [segment setTitleTextAttributes:CVEngravedTextAttributes(13, CVRGB(60, 60, 60)) forState:UIControlStateNormal];
-    [segment setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateSelected];
+    if (black) {
+        [segment setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateNormal];
+        [segment setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateSelected];
+    } else {
+        [segment setTitleTextAttributes:CVEngravedTextAttributes(13, CVRGB(60, 60, 60)) forState:UIControlStateNormal];
+        [segment setTitleTextAttributes:CVEmbossedTextAttributes(13) forState:UIControlStateSelected];
+    }
     CVInstallTableDefaults();
 }
 

@@ -5,6 +5,22 @@ All notable changes to **City VOD** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-10-17
+
+### Added
+- **Episode Detail Navigation & Badges**: added instant Previous/Next episode navigation buttons and metadata badges (`S01 • E04`, `22:00`, `TV-MA`, `HD`, `CC`) to the episode detail view.
+- **Rich Empty States**: added centered graphics, bold typography, and helpful descriptions for empty Favorites, empty Watch History, and Search screens.
+- **Engraved Section Headers**: added uppercase embossed table headers with drop shadows for Home sections.
+- **iPad Card Layout**: expanded row height to 104pt on iPad (`CVIsPad()`) with larger 16:9 thumbnails and scaled typography for better readability.
+
+### Changed
+- **Clip Scene Titles**: mapped South Park Studios `subHeader` to clip titles and preserved season/code identifiers (`S29`, `S18 • E6`) in cell subtitles and details.
+- **Search Deduplication**: deduplicated episode search results between catalog and cache, and enabled searching cached clips.
+- **City VOD Tab Bar Red Tint on Modern iOS**: switched modern iOS tab bar highlight from generic iOS 7 blue to authentic City VOD crimson red (`#EB2D37`).
+- **Dark Segmented Controls on Modern iOS**: fixed white/light segmented control bars in Library and Settings by applying dark glossy styling and dark interface style overrides.
+- **Player Controls & Scrubber Refinements**: underlaid top and bottom player bars with smooth gradient overlays, converted CC button into an illuminated badge when enabled, and styled quality button as a sleek capsule.
+- **Bordered Navigation Bar Buttons**: styled Home settings gear icon with `UIBarButtonItemStyleBordered` to match the Library navigation bar and iOS 6 aesthetic.
+
 ## [0.1.3] - 2026-10-17
 
 ### Changed

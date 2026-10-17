@@ -29,6 +29,7 @@
 @interface CVClip : NSObject <NSCoding>
 @property (nonatomic, copy) NSString *uuid;
 @property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy) NSString *seasonEpisodeString;
 @property (nonatomic, copy) NSString *summary;
 @property (nonatomic, copy) NSString *airDate;
 @property (nonatomic, copy) NSString *durationString;

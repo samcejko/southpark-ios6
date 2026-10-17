@@ -61,6 +61,7 @@ void CVModernStyleNavigationBar(UINavigationBar *bar);
 void CVModernStyleToolbar(UIToolbar *bar);
 void CVModernStyleSearchBar(UISearchBar *bar);
 void CVModernStyleTabBar(UITabBar *bar);
+void CVModernStyleSegmentedControl(UISegmentedControl *seg, BOOL dark);
 
 // iOS 13 and newer: the pieces of a table the system draws itself (section headers and footers, the default
 // colours of untouched labels) follow the lightness of the theme instead of the app's light style; nothing before

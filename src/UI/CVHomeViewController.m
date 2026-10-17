@@ -40,7 +40,7 @@
     self.tableView.rowHeight = [CVEpisodeCell heightForWidth:self.view.bounds.size.width];
 
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[[CVTheme shared] gearIconWhite]
-                                                                              style:UIBarButtonItemStylePlain
+                                                                              style:UIBarButtonItemStyleBordered
                                                                              target:self
                                                                              action:@selector(settingsTapped)];
 
@@ -136,6 +136,38 @@
         if (s == 0) return L(@"Featured Episodes");
     }
     return nil;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    NSString *title = [self tableView:tableView titleForHeaderInSection:section];
+    return title.length ? 30.0 : 0.0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    NSString *title = [self tableView:tableView titleForHeaderInSection:section];
+    if (!title.length) return nil;
+
+    CGFloat w = tableView.bounds.size.width;
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, 30.0)];
+    header.backgroundColor = [UIColor clearColor];
+
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(14, 6, w - 28, 20)];
+    label.font = [UIFont boldSystemFontOfSize:13];
+    label.backgroundColor = [UIColor clearColor];
+    if ([CVTheme shared].isDark) {
+        label.textColor = [UIColor colorWithWhite:0.85 alpha:1.0];
+        label.shadowColor = [UIColor blackColor];
+        label.shadowOffset = CGSizeMake(0, -1);
+    } else {
+        label.textColor = [UIColor colorWithRed:0.25 green:0.28 blue:0.33 alpha:1.0];
+        label.shadowColor = [UIColor whiteColor];
+        label.shadowOffset = CGSizeMake(0, 1);
+    }
+    label.text = [title uppercaseString];
+    [header addSubview:label];
+    return header;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section

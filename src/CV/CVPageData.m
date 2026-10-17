@@ -204,7 +204,22 @@
 
             NSDictionary *meta = CVDict(item[@"meta"]);
             NSDictionary *header = CVDict(meta[@"header"]);
-            c.title = CVStr(header[@"title"]);
+
+            NSString *subHeader = CVStr(meta[@"subHeader"]);
+            NSString *headerTitle = CVStr(header[@"title"]);
+            NSString *itemTitle = CVStr(item[@"title"]);
+
+            if (subHeader.length) {
+                c.title = subHeader;
+                c.seasonEpisodeString = headerTitle;
+            } else if (itemTitle.length) {
+                c.title = itemTitle;
+                c.seasonEpisodeString = headerTitle;
+            } else {
+                c.title = headerTitle.length ? headerTitle : L(@"Clip");
+                c.seasonEpisodeString = @"";
+            }
+
             c.summary = CVStr(meta[@"description"]);
             c.airDate = CVStr(meta[@"date"]);
 
