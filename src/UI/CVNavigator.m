@@ -25,9 +25,9 @@
 
 + (void)playEpisode:(CVEpisode *)episode from:(UIViewController *)controller
 {
-    if (!episode.canonicalURL.length) return;
+    if (!episode.urlPath.length) return;
     NSTimeInterval resume = [[CVHistory shared] positionForUUID:episode.uuid];
-    CVPlayerViewController *player = [[CVPlayerViewController alloc] initWithItemURL:episode.canonicalURL
+    CVPlayerViewController *player = [[CVPlayerViewController alloc] initWithItemURL:episode.urlPath
                                                                             itemUUID:episode.uuid
                                                                                title:episode.title
                                                                             subtitle:episode.seasonEpisodeString
@@ -38,8 +38,8 @@
 
 + (void)playClip:(CVClip *)clip from:(UIViewController *)controller
 {
-    if (!clip.canonicalURL.length) return;
-    CVPlayerViewController *player = [[CVPlayerViewController alloc] initWithItemURL:clip.canonicalURL
+    if (!clip.urlPath.length) return;
+    CVPlayerViewController *player = [[CVPlayerViewController alloc] initWithItemURL:clip.urlPath
                                                                             itemUUID:clip.uuid
                                                                                title:clip.title
                                                                             subtitle:clip.subtitle
@@ -84,13 +84,13 @@
     NSString *path = url.path;
     if ([path hasPrefix:@"/episodes/"]) {
         CVEpisode *ep = [[CVEpisode alloc] init];
-        ep.canonicalURL = path;
+        ep.urlPath = path;
         ep.title = [path lastPathComponent];
         [self openEpisode:ep from:controller];
         return YES;
     } else if ([path hasPrefix:@"/clips/"]) {
         CVClip *clip = [[CVClip alloc] init];
-        clip.canonicalURL = path;
+        clip.urlPath = path;
         clip.title = [path lastPathComponent];
         [self openClip:clip from:controller];
         return YES;
