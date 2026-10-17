@@ -1,0 +1,121 @@
+/* City VOD - Czech Localization (Čeština) */
+
+/* Navigation & Tabs */
+"Home" = "Domů";
+"Seasons" = "Série";
+"Clips" = "Klipy";
+"Search" = "Hledat";
+"Library" = "Knihovna";
+"Settings" = "Nastavení";
+"Favorites" = "Oblíbené";
+"History" = "Historie";
+
+/* Home & Lists */
+"Continue Watching" = "Pokračovat ve sledování";
+"Latest Clips" = "Nejnovější klipy";
+"Featured Episodes" = "Doporučené epizody";
+"Episodes" = "Epizody";
+"episodes" = "epizod";
+"Episode" = "Epizoda";
+"Clip" = "Klip";
+"Search episodes and clips..." = "Hledat epizody a klipy…";
+"Type a keyword, episode title, or season/episode (e.g. S01E01)." = "Zadejte klíčové slovo, název epizody nebo sérii (např. S01E01).";
+"No results found for \"%@\"." = "Pro „%@“ nebyly nalezeny žádné výsledky.";
+
+/* Detail & Actions */
+"Play Episode" = "Přehrát epizodu";
+"Resume" = "Pokračovat";
+"Start from Beginning" = "Přehrát od začátku";
+"★ Favorited" = "★ V oblíbených";
+"☆ Add to Favorites" = "☆ Přidat do oblíbených";
+"Open on Website" = "Otevřít na webu";
+"Share…" = "Sdílet…";
+"Copy link" = "Zkopírovat odkaz";
+"Open in Safari" = "Otevřít v Safari";
+"Open in Surfari" = "Otevřít v Surfari";
+"Links" = "Odkazy";
+
+/* Library */
+"Clear" = "Smazat";
+"Clear Watch History" = "Smazat historii sledování";
+"Are you sure you want to clear your watch history?" = "Opravdu chcete vymazat historii sledování?";
+"You have no favorites yet.\nTap the star icon on any episode to save it here." = "Zatím nemáte žádné oblíbené.\nKlepnutím na hvězdičku u epizody ji uložíte sem.";
+"No watch history yet.\nEpisodes you start watching will appear here." = "Žádná historie sledování.\nZde se zobrazí epizody, které začnete sledovat.";
+
+/* Playback & Errors */
+"Playback" = "Přehrávání";
+"Playback Error" = "Chyba přehrávání";
+"Quality" = "Kvalita";
+"Video Quality" = "Kvalita videa";
+"Auto" = "Automaticky";
+"Automatic" = "Automaticky";
+"Source (best)" = "Zdrojová (nejvyšší)";
+"Play next automatically" = "Automaticky další epizodu";
+"Subtitles by default" = "Titulky ve výchozím stavu";
+"Sound in background" = "Zvuk na pozadí";
+"Keep screen on" = "Nezhasínat displej";
+"The player picks what the connection allows, up to what the device decodes." = "Přehrávač zvolí kvalitu podle rychlosti sítě a možností zařízení.";
+"The streamer's own quality, when the device can decode it." = "Původní kvalita streamu, pokud ji zařízení zvládne dekódovat.";
+"This device decodes H.264 up to 1080p at 30 frames per second; renditions beyond that are left out of \"Automatic\"." = "Toto zařízení dekóduje H.264 do 1080p při 30 sn./s; vyšší profily jsou z automatického výběru vynechány.";
+"Could not resolve video stream." = "Nepodařilo se načíst video stream.";
+"Could not load episodes." = "Nepodařilo se načíst epizody.";
+"Could not load seasons." = "Nepodařilo se načíst série.";
+
+/* Settings */
+"Appearance & Audio" = "Vzhled a zvuk";
+"Theme" = "Motiv";
+"Light" = "Světlý";
+"Dark" = "Tmavý";
+"Audio Language" = "Jazyk zvuku";
+"Advanced" = "Pokročilé";
+"Verify certificates" = "Ověřovat certifikáty";
+"Turn certificate verification off only if the device clock is wrong or the certificate bundle is outdated." = "Vypínejte pouze v případě nesprávného data v zařízení nebo zastaralých kořenových certifikátů.";
+"Certificate verification can be turned off in Settings." = "Ověřování certifikátů lze vypnout v Nastavení.";
+"Clear image cache" = "Vymazat mezipaměť obrázků";
+"Clearing…" = "Mazání…";
+"Connection test" = "Test připojení";
+"Testing…" = "Testování…";
+"Tap to test the connection to South Park Studios" = "Klepnutím otestujete připojení k South Park Studios";
+"Server answered (HTTP %ld) in %.1f s" = "Server odpověděl (HTTP %ld) za %.1f s";
+
+/* About */
+"About" = "O aplikaci";
+"Version" = "Verze";
+"Author" = "Autor";
+"Root certificates" = "Kořenové certifikáty";
+"Device" = "Zařízení";
+"Support the development" = "Podpořit vývoj";
+"City VOD is an unofficial South Park Studios client. It is not affiliated with or endorsed by South Park Digital Studios, Paramount, or Comedy Central." = "City VOD je neoficiální klient pro South Park Studios. Není nijak spojen s ani podporován společnostmi South Park Digital Studios, Paramount či Comedy Central.";
+
+/* Relative Dates & Times */
+"just now" = "právě teď";
+"%ld min ago" = "před %ld min";
+"%ld h ago" = "před %ld h";
+"yesterday" = "včera";
+"%ld days ago" = "před %ld dny";
+"%ld min" = "%ld min";
+
+/* Common & Network Errors */
+"OK" = "OK";
+"Cancel" = "Zrušit";
+"Cancelled" = "Zrušeno";
+"Connection failed." = "Připojení se nezdařilo.";
+"Connection lost." = "Spojení bylo ztraceno.";
+"connection timed out" = "vypršel časový limit spojení";
+"Content decoding failed." = "Dekódování obsahu selhalo.";
+"Could not connect to %@: %@" = "Nelze se připojit k %1$@: %2$@";
+"Could not resolve %@ (%s). Is the device online?" = "Nelze přeložit doménu %1$@ (%2$s). Je zařízení online?";
+"Receiving the response failed: %@" = "Příjem odpovědi selhal: %@";
+"Request failed (HTTP %ld)." = "Požadavek selhal (HTTP %ld).";
+"Sending the request failed." = "Odeslání požadavku selhalo.";
+"Sending the request failed: %@" = "Odeslání požadavku selhalo: %@";
+"Server certificate rejected: %@. %@" = "Certifikát serveru byl odmítnut: %1$@. %2$@";
+"The certificate bundle is missing, cannot verify the server." = "Chybí sada certifikátů, server nelze ověřit.";
+"The server closed the connection without responding." = "Server ukončil spojení bez odpovědi.";
+"The server sent an invalid response." = "Server poslal neplatnou odpověď.";
+"The server stopped responding (timeout)." = "Server přestal odpovídat (timeout).";
+"TLS handshake failed: %@" = "TLS handshake selhal: %@";
+"TLS handshake timed out." = "Vypršel časový limit TLS handshake.";
+"Unexpected response format." = "Neočekávaný formát odpovědi.";
+"Unexpected response: %@" = "Neočekávaná odpověď: %@";
+"Check the date and time of this device." = "Zkontrolujte nastavení data a času v zařízení.";

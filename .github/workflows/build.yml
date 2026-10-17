@@ -1,0 +1,212 @@
+name: Build City VOD (iOS 6 armv7 + iOS 14 arm64)
+
+on:
+  push:
+    branches: ['**']   # not for tags, a release tag points at a commit that was already built
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  THEOS: /home/runner/theos
+  MBEDTLS_VERSION: "3.6.7"
+  LIBWEBP_VERSION: "1.5.0"
+  THEOS_CACHE_KEY: theos-linux-clang11-sdk93-sdk165-v2
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ios6-armv7
+            scheme: ""
+            suffix: ""
+            artifact: CityVOD-packages
+          - name: ios14-arm64
+            scheme: rootless
+            suffix: "-arm64"
+            artifact: CityVOD-packages-arm64
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential fakeroot rsync curl perl zip unzip git libxml2 xz-utils python3-pil fonts-dejavu-core librsvg2-bin libplist-utils libtinfo5 || \
+          sudo apt-get install -y --no-install-recommends \
+            build-essential fakeroot rsync curl perl zip unzip git libxml2 xz-utils python3-pil fonts-dejavu-core librsvg2-bin libplist-utils
+
+      - name: Restore Theos cache
+        id: theos-cache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/theos
+          key: ${{ env.THEOS_CACHE_KEY }}
+
+      - name: Install Theos, toolchain and the iOS 9.3 and 16.5 SDKs
+        if: steps.theos-cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          curl -sSL https://github.com/theos/toolchain/releases/download/v1.0-linux/linux-clang11-x86_64.tar.xz -o /tmp/toolchain.tar.xz
+          mkdir -p "$THEOS/toolchain/linux/iphone"
+          tar -xJf /tmp/toolchain.tar.xz -C "$THEOS/toolchain/linux/iphone"
+          rm -f /tmp/toolchain.tar.xz
+
+          mkdir -p "$THEOS/sdks"
+          for SDK in 9.3 16.5; do
+            URL="https://github.com/theos/sdks/releases/download/latest/iPhoneOS${SDK}.sdk.tar.xz"
+            echo "Fetching $URL"
+            curl -sSL "$URL" -o /tmp/sdk.tar.xz
+            rm -rf /tmp/sdks && mkdir -p /tmp/sdks
+            tar -xJf /tmp/sdk.tar.xz -C /tmp/sdks
+            rm -f /tmp/sdk.tar.xz
+            if [ -d "/tmp/sdks/iPhoneOS${SDK}.sdk" ]; then
+              mv "/tmp/sdks/iPhoneOS${SDK}.sdk" "$THEOS/sdks/"
+            fi
+          done
+          ls "$THEOS/sdks"
+
+      - name: Toolchain diagnostics
+        run: |
+          export PATH="$THEOS/toolchain/linux/iphone/bin:$THEOS/bin:$PATH"
+          which clang ld64 ldid || true
+          clang --version || true
+          ldd "$THEOS/toolchain/linux/iphone/bin/clang" | grep -i "not found" || echo "clang: all shared libraries resolved"
+          ls "$THEOS/sdks/iPhoneOS9.3.sdk" | head
+
+      - name: Fetch mbedTLS ${{ env.MBEDTLS_VERSION }}
+        run: |
+          set -e
+          curl -sSL "https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-${MBEDTLS_VERSION}/mbedtls-${MBEDTLS_VERSION}.tar.bz2" -o /tmp/mbedtls.tar.bz2
+          rm -rf vendor/mbedtls && mkdir -p vendor/mbedtls
+          tar -xjf /tmp/mbedtls.tar.bz2 -C vendor/mbedtls --strip-components=1
+          mv vendor/mbedtls/include/mbedtls/mbedtls_config.h vendor/mbedtls/include/mbedtls/mbedtls_config_default.h
+          cp vendor/mbedtls_config_ios6.h vendor/mbedtls/include/mbedtls/mbedtls_config.h
+          echo "mbedTLS sources: $(ls vendor/mbedtls/library/*.c | wc -l)"
+
+      - name: Fetch libwebp ${{ env.LIBWEBP_VERSION }}
+        run: |
+          set -e
+          curl -sSfL "https://github.com/webmproject/libwebp/archive/refs/tags/v${LIBWEBP_VERSION}.tar.gz" -o /tmp/libwebp.tar.gz
+          rm -rf vendor/libwebp && mkdir -p vendor/libwebp
+          tar -xzf /tmp/libwebp.tar.gz -C vendor/libwebp --strip-components=1
+          test -f vendor/libwebp/src/webp/decode.h
+          echo "libwebp sources: $(ls vendor/libwebp/src/dec/*.c vendor/libwebp/src/dsp/*.c vendor/libwebp/src/utils/*.c | wc -l)"
+
+      - name: Fetch CA bundle
+        run: |
+          curl -sSf https://curl.se/ca/cacert.pem -o Resources/cacert.pem
+          grep -c "BEGIN CERTIFICATE" Resources/cacert.pem
+
+      - name: Collect license texts
+        run: |
+          set -e
+          rm -rf Resources/licenses && mkdir -p Resources/licenses
+          cp LICENSE Resources/licenses/CityVOD-LICENSE.txt
+          cp vendor/mbedtls/LICENSE Resources/licenses/mbedtls-LICENSE.txt
+          cp vendor/libwebp/COPYING Resources/licenses/libwebp-COPYING.txt
+          cp vendor/libwebp/PATENTS Resources/licenses/libwebp-PATENTS.txt
+          ls -la Resources/licenses
+
+      - name: Verify assets
+        run: |
+          test -f Resources/Icon.png
+          test -f Resources/Icon-72@2x.png
+          ls -la Resources/Icon*.png
+
+      - name: Patch the iOS 9.3 SDK
+        run: |
+          set -e
+          TBIN="$THEOS/toolchain/linux/iphone/bin"
+          if [ -x /usr/bin/plistutil ]; then
+            ln -sf /usr/bin/plistutil "$TBIN/plistutil"
+            plistutil --help >/dev/null 2>&1 && echo "plistutil OK" || echo "plistutil still broken"
+          fi
+          SDK="$THEOS/sdks/iPhoneOS9.3.sdk"
+          LIBSYS="$SDK/usr/lib/libSystem.tbd"
+          test -f "$LIBSYS"
+          for lib in $(grep -o "/usr/lib/system/lib[A-Za-z0-9_]*\.dylib" "$LIBSYS" | sort -u); do
+            base="${lib%.dylib}"
+            if [ ! -f "$SDK$base.tbd" ] && [ ! -f "$SDK$lib" ]; then
+              mkdir -p "$(dirname "$SDK$base.tbd")"
+              printf -- '---\narchs:           [ armv7, armv7s, arm64 ]\nplatform:        ios\ninstall-name:    %s\ncurrent-version: 1.0\ncompatibility-version: 1.0\nexports:\n  - archs:           [ armv7, armv7s, arm64 ]\n    symbols:         [ ]\n...\n' "$lib" > "$SDK$base.tbd"
+              echo "stubbed $lib"
+            fi
+          done
+
+          LIBC="$SDK/usr/lib/system/libsystem_c.tbd"
+          ADD=""
+          for sym in _memcpy _memset _memmove _memcmp _memchr _strchr _strcmp _strncmp _strlen _strnlen _bzero \
+                     _strcpy _strncpy _strcat _strlcpy _strlcat _strstr _strrchr _strdup _memset_s _memset_pattern4 \
+                     _memset_pattern8 _memset_pattern16 _strncasecmp _strcasecmp; do
+            if ! grep -Eq "[[ ,]${sym}[], ]" "$LIBC" "$SDK/usr/lib/system/libsystem_platform.tbd"; then
+              ADD="${ADD}${sym}, "
+            fi
+          done
+          if [ -n "$ADD" ]; then
+            echo "adding to libsystem_c.tbd: $ADD"
+            sed -i "0,/symbols:            \[ /s//symbols:            [ ${ADD}/" "$LIBC"
+            grep -c "_memcpy" "$LIBC"
+          fi
+
+      - name: Build (${{ matrix.name }})
+        run: |
+          set -o pipefail
+          export PATH="$THEOS/toolchain/linux/iphone/bin:$THEOS/bin:$PATH"
+          if [ -n "${{ matrix.scheme }}" ]; then export THEOS_PACKAGE_SCHEME="${{ matrix.scheme }}"; fi
+          make clean || true
+          make package FINALPACKAGE=1 -j"$(nproc)" -k 2>&1 | tee build.log
+          echo "== staged app =="
+          APP=$(find .theos/_ -type d -name CityVOD.app | head -n1)
+          test -n "$APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          ls -la "$APP"
+          lipo -info "$APP/CityVOD" 2>/dev/null || true
+
+      - name: Make IPA
+        run: |
+          set -e
+          export PATH="$THEOS/toolchain/linux/iphone/bin:$THEOS/bin:$PATH"
+          echo "app: $APP"
+          LDID=$(command -v ldid || find "$THEOS" -type f -name ldid | head -n1)
+          echo "ldid: $LDID"
+          "$LDID" -S"$GITHUB_WORKSPACE/entitlements.xml" "$APP/CityVOD"
+          "$LDID" -e "$APP/CityVOD" | head -n 20
+          VERSION=$(grep '^Version:' control | cut -d' ' -f2)
+          rm -rf /tmp/ipa && mkdir -p /tmp/ipa/Payload packages
+          cp -a "$APP" /tmp/ipa/Payload/
+          (cd /tmp/ipa && zip -qr9 "$GITHUB_WORKSPACE/packages/CityVOD-$VERSION${{ matrix.suffix }}.ipa" Payload)
+          ls -la packages/
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            packages/*.ipa
+            packages/*.deb
+          if-no-files-found: error
+
+      - name: Upload link map
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-map-${{ matrix.name }}
+          path: CityVOD-link-*.map
+          if-no-files-found: warn
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.name }}
+          path: build.log
+          if-no-files-found: ignore

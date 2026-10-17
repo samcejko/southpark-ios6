@@ -1,0 +1,121 @@
+/* City VOD - English Localization */
+
+/* Navigation & Tabs */
+"Home" = "Home";
+"Seasons" = "Seasons";
+"Clips" = "Clips";
+"Search" = "Search";
+"Library" = "Library";
+"Settings" = "Settings";
+"Favorites" = "Favorites";
+"History" = "History";
+
+/* Home & Lists */
+"Continue Watching" = "Continue Watching";
+"Latest Clips" = "Latest Clips";
+"Featured Episodes" = "Featured Episodes";
+"Episodes" = "Episodes";
+"episodes" = "episodes";
+"Episode" = "Episode";
+"Clip" = "Clip";
+"Search episodes and clips..." = "Search episodes and clips...";
+"Type a keyword, episode title, or season/episode (e.g. S01E01)." = "Type a keyword, episode title, or season/episode (e.g. S01E01).";
+"No results found for \"%@\"." = "No results found for \"%@\".";
+
+/* Detail & Actions */
+"Play Episode" = "Play Episode";
+"Resume" = "Resume";
+"Start from Beginning" = "Start from Beginning";
+"★ Favorited" = "★ Favorited";
+"☆ Add to Favorites" = "☆ Add to Favorites";
+"Open on Website" = "Open on Website";
+"Share…" = "Share…";
+"Copy link" = "Copy link";
+"Open in Safari" = "Open in Safari";
+"Open in Surfari" = "Open in Surfari";
+"Links" = "Links";
+
+/* Library */
+"Clear" = "Clear";
+"Clear Watch History" = "Clear Watch History";
+"Are you sure you want to clear your watch history?" = "Are you sure you want to clear your watch history?";
+"You have no favorites yet.\nTap the star icon on any episode to save it here." = "You have no favorites yet.\nTap the star icon on any episode to save it here.";
+"No watch history yet.\nEpisodes you start watching will appear here." = "No watch history yet.\nEpisodes you start watching will appear here.";
+
+/* Playback & Errors */
+"Playback" = "Playback";
+"Playback Error" = "Playback Error";
+"Quality" = "Quality";
+"Video Quality" = "Video Quality";
+"Auto" = "Auto";
+"Automatic" = "Automatic";
+"Source (best)" = "Source (best)";
+"Play next automatically" = "Play next automatically";
+"Subtitles by default" = "Subtitles by default";
+"Sound in background" = "Sound in background";
+"Keep screen on" = "Keep screen on";
+"The player picks what the connection allows, up to what the device decodes." = "The player picks what the connection allows, up to what the device decodes.";
+"The streamer's own quality, when the device can decode it." = "The streamer's own quality, when the device can decode it.";
+"This device decodes H.264 up to 1080p at 30 frames per second; renditions beyond that are left out of \"Automatic\"." = "This device decodes H.264 up to 1080p at 30 frames per second; renditions beyond that are left out of \"Automatic\".";
+"Could not resolve video stream." = "Could not resolve video stream.";
+"Could not load episodes." = "Could not load episodes.";
+"Could not load seasons." = "Could not load seasons.";
+
+/* Settings */
+"Appearance & Audio" = "Appearance & Audio";
+"Theme" = "Theme";
+"Light" = "Light";
+"Dark" = "Dark";
+"Audio Language" = "Audio Language";
+"Advanced" = "Advanced";
+"Verify certificates" = "Verify certificates";
+"Turn certificate verification off only if the device clock is wrong or the certificate bundle is outdated." = "Turn certificate verification off only if the device clock is wrong or the certificate bundle is outdated.";
+"Certificate verification can be turned off in Settings." = "Certificate verification can be turned off in Settings.";
+"Clear image cache" = "Clear image cache";
+"Clearing…" = "Clearing…";
+"Connection test" = "Connection test";
+"Testing…" = "Testing…";
+"Tap to test the connection to South Park Studios" = "Tap to test the connection to South Park Studios";
+"Server answered (HTTP %ld) in %.1f s" = "Server answered (HTTP %ld) in %.1f s";
+
+/* About */
+"About" = "About";
+"Version" = "Version";
+"Author" = "Author";
+"Root certificates" = "Root certificates";
+"Device" = "Device";
+"Support the development" = "Support the development";
+"City VOD is an unofficial South Park Studios client. It is not affiliated with or endorsed by South Park Digital Studios, Paramount, or Comedy Central." = "City VOD is an unofficial South Park Studios client. It is not affiliated with or endorsed by South Park Digital Studios, Paramount, or Comedy Central.";
+
+/* Relative Dates & Times */
+"just now" = "just now";
+"%ld min ago" = "%ld min ago";
+"%ld h ago" = "%ld h ago";
+"yesterday" = "yesterday";
+"%ld days ago" = "%ld days ago";
+"%ld min" = "%ld min";
+
+/* Common & Network Errors */
+"OK" = "OK";
+"Cancel" = "Cancel";
+"Cancelled" = "Cancelled";
+"Connection failed." = "Connection failed.";
+"Connection lost." = "Connection lost.";
+"connection timed out" = "connection timed out";
+"Content decoding failed." = "Content decoding failed.";
+"Could not connect to %@: %@" = "Could not connect to %1$@: %2$@";
+"Could not resolve %@ (%s). Is the device online?" = "Could not resolve %1$@ (%2$s). Is the device online?";
+"Receiving the response failed: %@" = "Receiving the response failed: %@";
+"Request failed (HTTP %ld)." = "Request failed (HTTP %ld).";
+"Sending the request failed." = "Sending the request failed.";
+"Sending the request failed: %@" = "Sending the request failed: %@";
+"Server certificate rejected: %@. %@" = "Server certificate rejected: %1$@. %2$@";
+"The certificate bundle is missing, cannot verify the server." = "The certificate bundle is missing, cannot verify the server.";
+"The server closed the connection without responding." = "The server closed the connection without responding.";
+"The server sent an invalid response." = "The server sent an invalid response.";
+"The server stopped responding (timeout)." = "The server stopped responding (timeout).";
+"TLS handshake failed: %@" = "TLS handshake failed: %@";
+"TLS handshake timed out." = "TLS handshake timed out.";
+"Unexpected response format." = "Unexpected response format.";
+"Unexpected response: %@" = "Unexpected response: %@";
+"Check the date and time of this device." = "Check the date and time of this device.";
