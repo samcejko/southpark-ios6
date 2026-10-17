@@ -1,7 +1,5 @@
 #import "CVFavorites.h"
 
-NSString * const CVFavoritesDidChangeNotification = @"CVFavoritesDidChangeNotification";
-
 @interface CVFavorites ()
 @property (nonatomic, copy) NSString *storagePath;
 @property (nonatomic, strong) NSMutableArray<CVEpisode *> *items;
